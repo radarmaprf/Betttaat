@@ -80,6 +80,9 @@
         .city-select-modal .difficulty-select-inner{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px 0}
         .city-select-modal .diff-btn{background:#3a5e5e;border:2px solid #555;border-radius:40px;padding:6px 16px;cursor:pointer;font-weight:700;transition:.1s;font-size:clamp(.8rem,1.5vw,1rem);touch-action:manipulation;color:#fff}
         .city-select-modal .diff-btn.selected{background:#ffaa33;border-color:gold;color:#1a2a2a}
+        .city-select-modal .mode-label{display:inline-block;padding:4px 16px;border-radius:40px;font-size:.9rem;font-weight:700;margin-bottom:10px}
+        .city-select-modal .mode-label.single{background:#3a5e5e;color:#fff}
+        .city-select-modal .mode-label.sandbox{background:#ffaa33;color:#1a2a2a}
         .city-select-modal .start-btn{background:#ffaa33;border:none;padding:14px;border-radius:60px;font-size:1.2rem;font-weight:700;color:#1a2a2a;cursor:pointer;width:100%;margin-top:10px;transition:.2s}
         .city-select-modal .start-btn:hover{background:#ffcc66}
         .city-select-modal .select-all-bar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0 10px}
@@ -191,6 +194,7 @@
 <div id="citySelectModal" class="city-select-modal" style="display:none;">
     <span class="close-btn" id="closeCityModal">&times;</span>
     <h2>⚙️ НАСТРОЙКИ ИГРЫ</h2>
+    <div id="modeLabel" class="mode-label single">🎯 ОДИНОЧНАЯ ИГРА</div>
     <div style="margin:10px 0; text-align:center;">
         <span style="font-size:1.1rem; font-weight:700;">Сложность</span>
         <div class="difficulty-select-inner" id="cityDifficultySelect">
@@ -258,7 +262,7 @@
     // 1. ДАННЫЕ ВСЕХ ГОРОДОВ (ВОЕННАЯ ТЕМАТИКА, РАВНОЕ КОЛИЧЕСТВО)
     // =================================================================
     const allZoneData = [
-        // РОССИЯ (16 городов)
+        // РОССИЯ (17 городов)
         { name: 'МОСКВА', center: [55.7558,37.6173], team: 'russia', hp: 500, baseHp: 500 },
         { name: 'САНКТ-ПЕТЕРБУРГ', center: [59.9343,30.3351], team: 'russia', hp: 420, baseHp: 420 },
         { name: 'ЕКАТЕРИНБУРГ', center: [56.8389,60.6057], team: 'russia', hp: 380, baseHp: 380 },
@@ -276,7 +280,7 @@
         { name: 'ВОЛГОГРАД', center: [48.7047,44.5133], team: 'russia', hp: 320, baseHp: 320 },
         { name: 'БРЯНСК', center: [53.2433,34.3637], team: 'russia', hp: 290, baseHp: 290 },
         { name: 'КУРСК', center: [51.7304,36.1937], team: 'russia', hp: 290, baseHp: 290 },
-        // УКРАИНА (16 городов)
+        // УКРАИНА (17 городов)
         { name: 'КИЕВ', center: [50.4501,30.5234], team: 'ukraine', hp: 480, baseHp: 480 },
         { name: 'ХАРЬКОВ', center: [49.9935,36.2304], team: 'ukraine', hp: 400, baseHp: 400 },
         { name: 'ОДЕССА', center: [46.4825,30.7233], team: 'ukraine', hp: 380, baseHp: 380 },
@@ -292,21 +296,22 @@
         { name: 'ЧЕРНИГОВ', center: [51.4982,31.2893], team: 'ukraine', hp: 280, baseHp: 280 },
         { name: 'ЧЕРКАССЫ', center: [49.4444,32.0598], team: 'ukraine', hp: 280, baseHp: 280 },
         { name: 'ЖИТОМИР', center: [50.2544,28.6586], team: 'ukraine', hp: 270, baseHp: 270 },
-        { name: 'СУМЫ', center: [50.9077,34.7981], team: 'ukraine', hp: 270, baseHp: 270 }
+        { name: 'СУМЫ', center: [50.9077,34.7981], team: 'ukraine', hp: 270, baseHp: 270 },
+        { name: 'ХМЕЛЬНИЦКИЙ', center: [49.4229,26.9868], team: 'ukraine', hp: 260, baseHp: 260 }
     ];
 
     // =================================================================
     // 2. ДАЛЬНОСТЬ ДЛЯ КАЖДОГО ТИПА ОРУЖИЯ (В КИЛОМЕТРАХ)
     // =================================================================
     const weaponRange = {
-        drone: 2000,      // Shahed-136 до 2000 км [reference:9][reference:10]
-        cruise: 2600,     // Калибр до 2600 км [reference:11]
-        ballistic: 1000,  // Искандер до 1000 км [reference:12]
-        hypersonic: 3000, // Гиперзвуковые до 3000 км [reference:13]
-        x101: 5500,       // X-101 до 5500 км [reference:14]
-        kalibr: 2600,     // Калибр до 2600 км [reference:15]
-        kinzhal: 2000,    // Кинжал до 2000 км [reference:16]
-        iskander: 1000    // Искандер до 1000 км [reference:17]
+        drone: 2000,
+        cruise: 2600,
+        ballistic: 1000,
+        hypersonic: 3000,
+        x101: 5500,
+        kalibr: 2600,
+        kinzhal: 2000,
+        iskander: 1000
     };
 
     // =================================================================
@@ -578,7 +583,7 @@
 
     // ---- Функция расчёта расстояния между двумя точками (в километрах) ----
     function calculateDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371; // радиус Земли в км
+        const R = 6371;
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
         const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -596,8 +601,7 @@
         let fromLatLng = airport.getLatLng();
         if (!fromLatLng || typeof fromLatLng.lat !== 'number') return false;
 
-        // ===== ПРОВЕРКА ДАЛЬНОСТИ =====
-        const maxRange = weaponRange[type] || 2000; // по умолчанию 2000 км
+        const maxRange = weaponRange[type] || 2000;
         const distance = calculateDistance(fromLatLng.lat, fromLatLng.lng, targetObj.lat, targetObj.lng);
         if (distance > maxRange) {
             alert(`❌ Цель слишком далеко!\nРасстояние: ${Math.round(distance)} км\nМаксимальная дальность ${weapon.name}: ${maxRange} км`);
@@ -877,6 +881,7 @@
             if(isSandbox){
                 resources = 999999;
                 maxRadars = 999; maxPvo = 999; maxPowerPlants = 999; maxRefineries = 999;
+                // В песочнице ИИ всё равно атакует, но с бесконечными ресурсами у игрока
             } else {
                 if(difficulty==="EASY") resources = 400;
                 else if(difficulty==="NORMAL") resources = 300;
@@ -914,6 +919,9 @@
     const citySelectModal = document.getElementById('citySelectModal');
     const startGameBtn = document.getElementById('startGameBtn');
     const closeCityBtn = document.getElementById('closeCityModal');
+    const modeLabel = document.getElementById('modeLabel');
+
+    let currentMode = 'single'; // 'single' или 'sandbox'
 
     function renderCityGrid() {
         const container = document.getElementById('cityGridContainer');
@@ -1006,11 +1014,32 @@
         });
     });
 
+    // Открытие модалки для одиночной игры
     document.getElementById('singleBtn').addEventListener('click', function() {
         if (gameActive) { location.reload(); return; }
+        currentMode = 'single';
+        modeLabel.textContent = '🎯 ОДИНОЧНАЯ ИГРА';
+        modeLabel.className = 'mode-label single';
         selectedCities = allZoneData.map(c => c.name);
         renderCityGrid();
         document.querySelectorAll('#cityGridContainer input[type="checkbox"]').forEach(cb => cb.checked = true);
+        document.querySelectorAll('#cityDifficultySelect .diff-btn').forEach(b => b.classList.remove('selected'));
+        document.querySelector('#cityDifficultySelect .diff-btn[data-diff="NORMAL"]').classList.add('selected');
+        selectedDifficulty = 'NORMAL';
+        citySelectModal.style.display = 'block';
+        document.getElementById('menuScreen').style.display = 'none';
+    });
+
+    // Открытие модалки для песочницы
+    document.getElementById('sandboxBtn').addEventListener('click', function() {
+        if (gameActive) { location.reload(); return; }
+        currentMode = 'sandbox';
+        modeLabel.textContent = '🏖️ ПЕСОЧНИЦА (бесконечные ресурсы)';
+        modeLabel.className = 'mode-label sandbox';
+        selectedCities = allZoneData.map(c => c.name);
+        renderCityGrid();
+        document.querySelectorAll('#cityGridContainer input[type="checkbox"]').forEach(cb => cb.checked = true);
+        // Сложность по умолчанию NORMAL
         document.querySelectorAll('#cityDifficultySelect .diff-btn').forEach(b => b.classList.remove('selected'));
         document.querySelector('#cityDifficultySelect .diff-btn[data-diff="NORMAL"]').classList.add('selected');
         selectedDifficulty = 'NORMAL';
@@ -1036,7 +1065,7 @@
         }
         difficulty = selectedDifficulty;
         isAI = true;
-        isSandbox = false;
+        isSandbox = (currentMode === 'sandbox');
         myTeam = 'russia';
         enemyTeam = 'ukraine';
         citySelectModal.style.display = 'none';
@@ -1046,17 +1075,6 @@
     // =================================================================
     // ОСТАЛЬНЫЕ КНОПКИ
     // =================================================================
-    document.getElementById('sandboxBtn').addEventListener('click', function() {
-        if(gameActive) location.reload();
-        selectedCities = allZoneData.map(c => c.name);
-        difficulty = "NORMAL";
-        isAI = true;
-        isSandbox = true;
-        myTeam = 'russia';
-        enemyTeam = 'ukraine';
-        initGameMapAndLogic();
-    });
-
     document.getElementById('multiplayerBtn').addEventListener('click', function() {
         const controls = document.getElementById('multiplayerControls');
         controls.style.display = controls.style.display === 'none' ? 'block' : 'none';
@@ -1070,7 +1088,7 @@
         else alert('Введите код комнаты');
     });
     document.getElementById('tutorialBtn').addEventListener('click', function() {
-        alert('Обучение: постройте аэродром → радар → ПВО → атакуйте врага. У каждого оружия своя дальность — если цель слишком далеко, атака не пройдёт.');
+        alert('Обучение: постройте аэродром → радар → ПВО → атакуйте врага. У каждого оружия своя дальность — если цель слишком далеко, атака не пройдёт. В песочнице бесконечные ресурсы и нет лимитов на постройки.');
     });
 
     // =================================================================
@@ -1134,7 +1152,7 @@
         closeAttackModal();
     });
 
-    console.log("✅ Игра загружена. Добавлена реалистичная дальность для каждого типа оружия. Если цель слишком далеко — атака не пройдёт.");
+    console.log("✅ Игра загружена. Для песочницы теперь открывается выбор городов и сложности.");
 </script>
 </body>
 </html>
