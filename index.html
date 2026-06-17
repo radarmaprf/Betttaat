@@ -19,9 +19,6 @@
         @keyframes scan{0%{top:0}100%{top:100%}}
         .card{background:rgba(20,30,35,0.85);backdrop-filter:blur(14px);border-radius:48px;padding:clamp(20px,4vw,40px) clamp(16px,3vw,32px);text-align:center;max-width:92%;width:480px;color:#fff;box-shadow:0 25px 45px rgba(0,0,0,0.5),0 0 0 1px rgba(255,215,0,0.2);border:1px solid rgba(255,215,0,0.3);position:relative;z-index:10;max-height:90vh;overflow-y:auto}
         .logo{font-size:clamp(2.2rem,6vw,3.5rem);font-weight:900;letter-spacing:4px;text-transform:uppercase;background:linear-gradient(135deg,#ffb347,#ff8c00);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 15px rgba(255,140,0,0.5);margin-bottom:.5rem}
-        .difficulty-select{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0 15px}
-        .difficulty-btn{background:#3a5e5e;border:2px solid #fff;border-radius:40px;padding:6px 12px;cursor:pointer;font-weight:700;transition:.1s;font-size:clamp(.7rem,1.5vw,1rem);touch-action:manipulation}
-        .difficulty-btn.selected{background:#ffaa33;border-color:gold;color:#1a2a2a}
         .card button{display:block;width:100%;background:rgba(255,255,255,0.08);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:clamp(12px,2.5vh,16px);margin:10px 0;font-size:clamp(1rem,2.5vw,1.2rem);font-weight:700;border-radius:60px;cursor:pointer;transition:.2s;box-shadow:0 2px 5px rgba(0,0,0,0.2);touch-action:manipulation}
         .card button:hover{transform:translateY(-2px);background:rgba(255,255,255,0.15);border-color:rgba(255,215,0,0.5)}
         .card button:active{transform:scale(.96)}
@@ -104,11 +101,10 @@
             .modal .weapon-grid{grid-template-columns:1fr 1fr;gap:6px;max-height:200px}
             .modal .weapon-card{padding:4px}
             .modal .weapon-card img{height:40px}
-            .card,.auth-card{padding:16px;border-radius:32px;width:100%;max-width:95%}
+            .card{padding:16px;border-radius:32px;width:100%;max-width:95%}
             .logo{font-size:2rem}
-            .difficulty-btn{font-size:.6rem;padding:4px 8px}
-            .card button,.auth-card button{font-size:.9rem;padding:10px;margin:6px 0}
-            .card input,.auth-card input{font-size:.9rem;padding:10px}
+            .card button{font-size:.9rem;padding:10px;margin:6px 0}
+            .card input{font-size:.9rem;padding:10px}
             .city-select-modal{width:95vw;padding:16px}
             .city-grid{grid-template-columns:1fr;max-height:150px}
         }
@@ -116,7 +112,7 @@
             #gameHUD{padding:4px 12px;font-size:.8rem}
             .bar-bg{width:80px;height:7px}
             .modal{width:80vw;padding:20px}
-            .card,.auth-card{padding:30px 24px}
+            .card{padding:30px 24px}
             .logo{font-size:2.5rem}
         }
         @media (max-width:800px) and (orientation:landscape){
@@ -132,11 +128,10 @@
             .city-grid{max-height:120px}
         }
         @media (max-width:400px){
-            .card,.auth-card{padding:12px 10px;border-radius:24px}
+            .card{padding:12px 10px;border-radius:24px}
             .logo{font-size:1.6rem}
-            .difficulty-btn{font-size:.5rem;padding:3px 6px}
-            .card button,.auth-card button{font-size:.8rem;padding:8px;margin:4px 0}
-            .card input,.auth-card input{font-size:.8rem;padding:8px}
+            .card button{font-size:.8rem;padding:8px;margin:4px 0}
+            .card input{font-size:.8rem;padding:8px}
             .bar-bg{width:35px;height:4px}
             .modal{padding:10px;width:98vw}
             .modal h3{font-size:1rem}
@@ -249,7 +244,7 @@
 
 <script>
     // =================================================================
-    // ПОЛНЫЙ ИГРОВОЙ ДВИЖОК (БЕЗ АВТОРИЗАЦИИ)
+    // ПОЛНЫЙ ИГРОВОЙ ДВИЖОК (БЕЗ АВТОРИЗАЦИИ И КЛЮЧЕЙ)
     // =================================================================
 
     // ---- Глобальные переменные ----
