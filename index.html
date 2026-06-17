@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sky in Fire — тестовая версия</title>
+    <title>Sky in Fire — выбор городов (Россия и Украина)</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-rotatedmarker/leaflet.rotatedMarker.js"></script>
@@ -65,21 +65,26 @@
         .modal button:active{transform:scale(.96)}
         #costDisplay{margin:8px 0;font-weight:700;font-size:clamp(.9rem,2vw,1.2rem)}
         /* Модалка выбора городов */
-        .city-select-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(180deg,#0d1a1a,#020808);border-radius:40px;padding:clamp(20px,4vw,35px);z-index:5000;color:#fff;width:clamp(320px,90vw,550px);max-height:85vh;overflow-y:auto;border:2px solid #ffaa33;box-shadow:0 0 50px rgba(255,170,51,0.3)}
+        .city-select-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(180deg,#0d1a1a,#020808);border-radius:40px;padding:clamp(20px,4vw,35px);z-index:5000;color:#fff;width:clamp(350px,95vw,650px);max-height:85vh;overflow-y:auto;border:2px solid #ffaa33;box-shadow:0 0 50px rgba(255,170,51,0.3)}
         .city-select-modal h2{font-size:clamp(1.6rem,4vw,2.2rem);text-align:center;margin-bottom:15px;color:#ffaa33}
         .city-select-modal .close-btn{position:absolute;top:10px;right:20px;font-size:2rem;cursor:pointer;color:#aaa;transition:.2s}
         .city-select-modal .close-btn:hover{color:#fff}
-        .city-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:15px 0;max-height:200px;overflow-y:auto;padding:5px}
-        .city-item{display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(255,255,255,0.05);border-radius:10px;cursor:pointer;transition:.2s}
-        .city-item:hover{background:rgba(255,255,255,0.1)}
-        .city-item input[type="checkbox"]{width:18px;height:18px;cursor:pointer;accent-color:#ffaa33}
-        .city-item label{font-size:clamp(.9rem,2vw,1.1rem);cursor:pointer;flex:1}
-        .city-item .country-badge{font-size:.7rem;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.15)}
-        .city-select-modal .difficulty-select-inner{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:15px 0}
-        .city-select-modal .diff-btn{background:#3a5e5e;border:2px solid #555;border-radius:40px;padding:8px 18px;cursor:pointer;font-weight:700;transition:.1s;font-size:clamp(.8rem,1.5vw,1rem);touch-action:manipulation;color:#fff}
+        .city-grid-container{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:10px 0;max-height:300px;overflow-y:auto;padding:5px}
+        .city-column{background:rgba(255,255,255,0.03);border-radius:16px;padding:10px}
+        .city-column h3{text-align:center;font-size:1rem;margin-bottom:8px;color:#ffaa33}
+        .city-item{display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:8px;cursor:pointer;transition:.2s;margin:2px 0}
+        .city-item:hover{background:rgba(255,255,255,0.08)}
+        .city-item input[type="checkbox"]{width:16px;height:16px;cursor:pointer;accent-color:#ffaa33;flex-shrink:0}
+        .city-item label{font-size:clamp(.8rem,1.3vw,1rem);cursor:pointer;flex:1;white-space:nowrap}
+        .city-item .country-badge{font-size:.7rem;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.1);flex-shrink:0}
+        .city-select-modal .difficulty-select-inner{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px 0}
+        .city-select-modal .diff-btn{background:#3a5e5e;border:2px solid #555;border-radius:40px;padding:6px 16px;cursor:pointer;font-weight:700;transition:.1s;font-size:clamp(.8rem,1.5vw,1rem);touch-action:manipulation;color:#fff}
         .city-select-modal .diff-btn.selected{background:#ffaa33;border-color:gold;color:#1a2a2a}
         .city-select-modal .start-btn{background:#ffaa33;border:none;padding:14px;border-radius:60px;font-size:1.2rem;font-weight:700;color:#1a2a2a;cursor:pointer;width:100%;margin-top:10px;transition:.2s}
         .city-select-modal .start-btn:hover{background:#ffcc66}
+        .city-select-modal .select-all-bar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0 10px}
+        .city-select-modal .select-all-bar button{background:#3a5e5e;border:none;color:#fff;padding:4px 14px;border-radius:40px;cursor:pointer;font-size:.8rem}
+        .city-select-modal .select-all-bar button:hover{background:#4a6e6e}
         .zone-marker{background:rgba(0,0,0,.8);border-radius:16px;padding:4px 8px;text-align:center;font-weight:700;color:#fff;font-size:clamp(.5rem,1vw,.8rem);box-shadow:0 0 10px rgba(0,0,0,.5);white-space:nowrap}
         .hidden-projectile{display:none!important}
         .loading-indicator{background:rgba(0,0,0,.7);color:#fff;padding:8px 16px;border-radius:30px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3000;font-size:clamp(.9rem,2vw,1.2rem)}
@@ -106,7 +111,9 @@
             .card button{font-size:.9rem;padding:10px;margin:6px 0}
             .card input{font-size:.9rem;padding:10px}
             .city-select-modal{width:95vw;padding:16px}
-            .city-grid{grid-template-columns:1fr;max-height:150px}
+            .city-grid-container{grid-template-columns:1fr;max-height:250px}
+            .city-column h3{font-size:.9rem}
+            .city-item label{font-size:.75rem}
         }
         @media (min-width:601px) and (max-width:900px){
             #gameHUD{padding:4px 12px;font-size:.8rem}
@@ -125,7 +132,9 @@
             .modal .weapon-grid{max-height:150px}
             .modal .weapon-card img{height:30px}
             .city-select-modal{width:80vw;padding:12px}
-            .city-grid{max-height:120px}
+            .city-grid-container{max-height:150px}
+            .city-column h3{font-size:.8rem}
+            .city-item label{font-size:.7rem}
         }
         @media (max-width:400px){
             .card{padding:12px 10px;border-radius:24px}
@@ -138,7 +147,7 @@
             .modal .weapon-card{padding:4px}
             .modal .weapon-card img{height:30px}
             .city-select-modal{padding:12px}
-            .city-item label{font-size:.8rem}
+            .city-item label{font-size:.7rem}
         }
     </style>
 </head>
@@ -193,10 +202,12 @@
     </div>
     <div style="margin:10px 0; text-align:center;">
         <span style="font-size:1.1rem; font-weight:700;">Выберите города</span>
-        <div id="cityList" class="city-grid"></div>
-        <div style="margin-top:8px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
-            <button id="selectAllCities" style="background:#3a5e5e; border:none; color:#fff; padding:6px 16px; border-radius:40px; cursor:pointer; font-size:.9rem;">Выбрать все</button>
-            <button id="deselectAllCities" style="background:#5e3a3a; border:none; color:#fff; padding:6px 16px; border-radius:40px; cursor:pointer; font-size:.9rem;">Снять все</button>
+        <div class="select-all-bar">
+            <button id="selectAllCities">Выбрать все</button>
+            <button id="deselectAllCities">Снять все</button>
+        </div>
+        <div class="city-grid-container" id="cityGridContainer">
+            <!-- Россия слева, Украина справа -->
         </div>
     </div>
     <button id="startGameBtn" class="start-btn">▶️ НАЧАТЬ ИГРУ</button>
@@ -244,10 +255,46 @@
 
 <script>
     // =================================================================
-    // ПОЛНЫЙ ИГРОВОЙ ДВИЖОК (БЕЗ АВТОРИЗАЦИИ И КЛЮЧЕЙ)
+    // 1. ДАННЫЕ ВСЕХ ГОРОДОВ (РАВНОЕ КОЛИЧЕСТВО)
     // =================================================================
+    const allZoneData = [
+        // РОССИЯ (15 городов)
+        { name: 'МОСКВА', center: [55.7558,37.6173], team: 'russia', hp: 500, baseHp: 500 },
+        { name: 'САНКТ-ПЕТЕРБУРГ', center: [59.9343,30.3351], team: 'russia', hp: 420, baseHp: 420 },
+        { name: 'ЕКАТЕРИНБУРГ', center: [56.8389,60.6057], team: 'russia', hp: 380, baseHp: 380 },
+        { name: 'НОВОСИБИРСК', center: [55.0084,82.9357], team: 'russia', hp: 400, baseHp: 400 },
+        { name: 'КАЗАНЬ', center: [55.7887,49.1221], team: 'russia', hp: 360, baseHp: 360 },
+        { name: 'НИЖНИЙ НОВГОРОД', center: [56.2965,43.9361], team: 'russia', hp: 340, baseHp: 340 },
+        { name: 'ЧЕЛЯБИНСК', center: [55.1644,61.4368], team: 'russia', hp: 320, baseHp: 320 },
+        { name: 'САМАРА', center: [53.1958,50.1008], team: 'russia', hp: 330, baseHp: 330 },
+        { name: 'ОМСК', center: [54.9885,73.3242], team: 'russia', hp: 310, baseHp: 310 },
+        { name: 'РОСТОВ-НА-ДОНУ', center: [47.2357,39.7015], team: 'russia', hp: 350, baseHp: 350 },
+        { name: 'УФА', center: [54.7348,55.9579], team: 'russia', hp: 320, baseHp: 320 },
+        { name: 'КРАСНОЯРСК', center: [56.0106,92.8526], team: 'russia', hp: 340, baseHp: 340 },
+        { name: 'ВОРОНЕЖ', center: [51.6605,39.2003], team: 'russia', hp: 300, baseHp: 300 },
+        { name: 'ПЕРМЬ', center: [58.0103,56.2506], team: 'russia', hp: 310, baseHp: 310 },
+        { name: 'ВОЛГОГРАД', center: [48.7047,44.5133], team: 'russia', hp: 320, baseHp: 320 },
+        // УКРАИНА (15 городов)
+        { name: 'КИЕВ', center: [50.4501,30.5234], team: 'ukraine', hp: 480, baseHp: 480 },
+        { name: 'ХАРЬКОВ', center: [49.9935,36.2304], team: 'ukraine', hp: 400, baseHp: 400 },
+        { name: 'ОДЕССА', center: [46.4825,30.7233], team: 'ukraine', hp: 380, baseHp: 380 },
+        { name: 'ДНЕПР', center: [48.4647,35.0467], team: 'ukraine', hp: 360, baseHp: 360 },
+        { name: 'ЛЬВОВ', center: [49.8397,24.0297], team: 'ukraine', hp: 340, baseHp: 340 },
+        { name: 'ЗАПОРОЖЬЕ', center: [47.8388,35.1396], team: 'ukraine', hp: 330, baseHp: 330 },
+        { name: 'КРИВОЙ РОГ', center: [47.9105,33.3918], team: 'ukraine', hp: 320, baseHp: 320 },
+        { name: 'НИКОЛАЕВ', center: [46.9750,31.9946], team: 'ukraine', hp: 310, baseHp: 310 },
+        { name: 'МАРИУПОЛЬ', center: [47.0971,37.5433], team: 'ukraine', hp: 300, baseHp: 300 },
+        { name: 'ВИННИЦА', center: [49.2328,28.4810], team: 'ukraine', hp: 290, baseHp: 290 },
+        { name: 'ХЕРСОН', center: [46.6354,32.6169], team: 'ukraine', hp: 280, baseHp: 280 },
+        { name: 'ПОЛТАВА', center: [49.5883,34.5514], team: 'ukraine', hp: 290, baseHp: 290 },
+        { name: 'ЧЕРНИГОВ', center: [51.4982,31.2893], team: 'ukraine', hp: 280, baseHp: 280 },
+        { name: 'ЧЕРКАССЫ', center: [49.4444,32.0598], team: 'ukraine', hp: 280, baseHp: 280 },
+        { name: 'ЖИТОМИР', center: [50.2544,28.6586], team: 'ukraine', hp: 270, baseHp: 270 }
+    ];
 
-    // ---- Глобальные переменные ----
+    // =================================================================
+    // 2. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
+    // =================================================================
     let map, gameActive = false;
     let resources = 300;
     let buildings = [], zones = [], projectiles = [];
@@ -272,45 +319,6 @@
         { level:7, xp:15000, title:"Генерал" }
     ];
     let audioCtx = null;
-
-    // ---- Fallback границы ----
-    const fallbackRussia = {
-        "type":"FeatureCollection",
-        "features":[{
-            "type":"Feature",
-            "properties":{},
-            "geometry":{
-                "type":"Polygon",
-                "coordinates":[[[19.6,41.2],[60.0,41.2],[85.0,45.0],[105.0,45.0],[105.0,55.0],[85.0,55.0],[60.0,50.0],[19.6,50.0],[19.6,41.2]]]
-            }
-        }]
-    };
-    const fallbackUkraine = {
-        "type":"FeatureCollection",
-        "features":[{
-            "type":"Feature",
-            "properties":{},
-            "geometry":{
-                "type":"Polygon",
-                "coordinates":[[[22.0,44.3],[40.0,44.3],[40.0,52.4],[22.0,52.4],[22.0,44.3]]]
-            }
-        }]
-    };
-
-    // ---- Данные всех городов ----
-    const allZoneData = [
-        { name: 'КИЕВ', center: [50.4501,30.5234], team: 'ukraine', hp: 400, baseHp: 400 },
-        { name: 'ОДЕССА', center: [46.4825,30.7233], team: 'ukraine', hp: 320, baseHp: 320 },
-        { name: 'ХАРЬКОВ', center: [49.9935,36.2304], team: 'ukraine', hp: 360, baseHp: 360 },
-        { name: 'ДНЕПР', center: [48.4647,35.0467], team: 'ukraine', hp: 340, baseHp: 340 },
-        { name: 'ЛЬВОВ', center: [49.8397,24.0297], team: 'ukraine', hp: 280, baseHp: 280 },
-        { name: 'МОСКВА', center: [55.7558,37.6173], team: 'russia', hp: 480, baseHp: 480 },
-        { name: 'БЕЛГОРОД', center: [50.5975,36.5858], team: 'russia', hp: 240, baseHp: 240 },
-        { name: 'РОСТОВ', center: [47.2357,39.7015], team: 'russia', hp: 300, baseHp: 300 },
-        { name: 'ВОРОНЕЖ', center: [51.6605,39.2003], team: 'russia', hp: 320, baseHp: 320 },
-        { name: 'ВОЛГОГРАД', center: [48.7047,44.5133], team: 'russia', hp: 340, baseHp: 340 },
-        { name: 'КРАСНОДАР', center: [45.0355,38.9753], team: 'russia', hp: 280, baseHp: 280 }
-    ];
 
     // ---- Выбранные города (по умолчанию все) ----
     let selectedCities = allZoneData.map(c => c.name);
@@ -362,6 +370,30 @@
         osc.start(); osc.stop(now + duration);
     }
 
+    // ---- Fallback границы ----
+    const fallbackRussia = {
+        "type":"FeatureCollection",
+        "features":[{
+            "type":"Feature",
+            "properties":{},
+            "geometry":{
+                "type":"Polygon",
+                "coordinates":[[[19.6,41.2],[60.0,41.2],[85.0,45.0],[105.0,45.0],[105.0,55.0],[85.0,55.0],[60.0,50.0],[19.6,50.0],[19.6,41.2]]]
+            }
+        }]
+    };
+    const fallbackUkraine = {
+        "type":"FeatureCollection",
+        "features":[{
+            "type":"Feature",
+            "properties":{},
+            "geometry":{
+                "type":"Polygon",
+                "coordinates":[[[22.0,44.3],[40.0,44.3],[40.0,52.4],[22.0,52.4],[22.0,44.3]]]
+            }
+        }]
+    };
+
     // ---- География ----
     function loadRealBorders(cb) {
         Promise.all([
@@ -403,22 +435,24 @@
         document.getElementById('uaFill').style.width=uaPercent+'%';
         if(ruTotal<=0 && gameActive){
             gameActive=false;
-            alert("🏆 ПОБЕДА! Вы уничтожили все города России.");
-            updateStatsAfterGame(true);
+            if(myTeam==='ukraine') alert("🏆 ПОБЕДА! Вы уничтожили все города России.");
+            else alert("💀 ПОРАЖЕНИЕ! Ваши города России уничтожены.");
+            updateStatsAfterGame(myTeam==='ukraine');
             setTimeout(()=>location.reload(),3000);
         }
         if(uaTotal<=0 && gameActive){
             gameActive=false;
-            alert("🏆 ПОБЕДА! Вы уничтожили все города Украины.");
-            updateStatsAfterGame(true);
+            if(myTeam==='russia') alert("🏆 ПОБЕДА! Вы уничтожили все города Украины.");
+            else alert("💀 ПОРАЖЕНИЕ! Ваши города Украины уничтожены.");
+            updateStatsAfterGame(myTeam==='russia');
             setTimeout(()=>location.reload(),3000);
         }
     }
 
     function initZones(){
         zones=[];
-        const filteredZoneData = allZoneData.filter(z => selectedCities.includes(z.name));
-        filteredZoneData.forEach(z=>{
+        const filtered = allZoneData.filter(z => selectedCities.includes(z.name));
+        filtered.forEach(z=>{
             let circle=L.circle(z.center,{radius:15000,color:z.team==='russia'?teamColors.russia:teamColors.ukraine,weight:2,fillOpacity:0.25}).addTo(map);
             let marker=L.marker(z.center,{icon:L.divIcon({html:`<div class="zone-marker" style="border-color: ${z.team==='russia'?'#ff8888':'#88aaff'};">${z.name}<br>${Math.floor((z.hp/z.baseHp)*100)}%</div>`,iconSize:[80,40]})}).addTo(map);
             zones.push({id:z.name,name:z.name,center:z.center,team:z.team,hp:z.hp,baseHp:z.baseHp,circle:circle,marker:marker});
@@ -840,14 +874,23 @@
     // МЕНЮ ВЫБОРА ГОРОДОВ И СЛОЖНОСТИ
     // =================================================================
     const citySelectModal = document.getElementById('citySelectModal');
-    const cityList = document.getElementById('cityList');
     const startGameBtn = document.getElementById('startGameBtn');
     const closeCityBtn = document.getElementById('closeCityModal');
 
-    // Заполняем список городов
-    function renderCityList() {
-        cityList.innerHTML = '';
-        allZoneData.forEach(city => {
+    // Создаём две колонки: Россия слева, Украина справа
+    function renderCityGrid() {
+        const container = document.getElementById('cityGridContainer');
+        container.innerHTML = '';
+        const russiaCities = allZoneData.filter(c => c.team === 'russia');
+        const ukraineCities = allZoneData.filter(c => c.team === 'ukraine');
+
+        // Колонка Россия
+        const colRussia = document.createElement('div');
+        colRussia.className = 'city-column';
+        const h3Russia = document.createElement('h3');
+        h3Russia.textContent = '🇷🇺 РОССИЯ';
+        colRussia.appendChild(h3Russia);
+        russiaCities.forEach(city => {
             const div = document.createElement('div');
             div.className = 'city-item';
             const checkbox = document.createElement('input');
@@ -859,7 +902,7 @@
             label.textContent = city.name;
             const badge = document.createElement('span');
             badge.className = 'country-badge';
-            badge.textContent = city.team === 'russia' ? '🇷🇺' : '🇺🇦';
+            badge.textContent = 'RU';
             div.appendChild(checkbox);
             div.appendChild(label);
             div.appendChild(badge);
@@ -870,20 +913,54 @@
                     selectedCities = selectedCities.filter(c => c !== city.name);
                 }
             });
-            cityList.appendChild(div);
+            colRussia.appendChild(div);
         });
+        container.appendChild(colRussia);
+
+        // Колонка Украина
+        const colUkraine = document.createElement('div');
+        colUkraine.className = 'city-column';
+        const h3Ukraine = document.createElement('h3');
+        h3Ukraine.textContent = '🇺🇦 УКРАИНА';
+        colUkraine.appendChild(h3Ukraine);
+        ukraineCities.forEach(city => {
+            const div = document.createElement('div');
+            div.className = 'city-item';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = 'city_' + city.name;
+            checkbox.checked = selectedCities.includes(city.name);
+            const label = document.createElement('label');
+            label.htmlFor = 'city_' + city.name;
+            label.textContent = city.name;
+            const badge = document.createElement('span');
+            badge.className = 'country-badge';
+            badge.textContent = 'UA';
+            div.appendChild(checkbox);
+            div.appendChild(label);
+            div.appendChild(badge);
+            checkbox.addEventListener('change', () => {
+                if(checkbox.checked) {
+                    if(!selectedCities.includes(city.name)) selectedCities.push(city.name);
+                } else {
+                    selectedCities = selectedCities.filter(c => c !== city.name);
+                }
+            });
+            colUkraine.appendChild(div);
+        });
+        container.appendChild(colUkraine);
     }
 
     // Обработчики для кнопок "Выбрать все" / "Снять все"
     document.getElementById('selectAllCities').addEventListener('click', () => {
         selectedCities = allZoneData.map(c => c.name);
-        renderCityList();
-        document.querySelectorAll('#cityList input[type="checkbox"]').forEach(cb => cb.checked = true);
+        renderCityGrid();
+        document.querySelectorAll('#cityGridContainer input[type="checkbox"]').forEach(cb => cb.checked = true);
     });
     document.getElementById('deselectAllCities').addEventListener('click', () => {
         selectedCities = [];
-        renderCityList();
-        document.querySelectorAll('#cityList input[type="checkbox"]').forEach(cb => cb.checked = false);
+        renderCityGrid();
+        document.querySelectorAll('#cityGridContainer input[type="checkbox"]').forEach(cb => cb.checked = false);
     });
 
     // Выбор сложности в модалке
@@ -898,12 +975,11 @@
 
     // Открытие модалки при нажатии "Одиночная игра"
     document.getElementById('singleBtn').addEventListener('click', function() {
-        // Если уже есть игра, перезагружаем настройки
         if (gameActive) { location.reload(); return; }
         // Сбрасываем выбор городов на все
         selectedCities = allZoneData.map(c => c.name);
-        renderCityList();
-        document.querySelectorAll('#cityList input[type="checkbox"]').forEach(cb => cb.checked = true);
+        renderCityGrid();
+        document.querySelectorAll('#cityGridContainer input[type="checkbox"]').forEach(cb => cb.checked = true);
         // Сложность по умолчанию NORMAL
         document.querySelectorAll('#cityDifficultySelect .diff-btn').forEach(b => b.classList.remove('selected'));
         document.querySelector('#cityDifficultySelect .diff-btn[data-diff="NORMAL"]').classList.add('selected');
@@ -920,12 +996,10 @@
 
     // Начать игру
     startGameBtn.addEventListener('click', function() {
-        // Проверяем, что выбрано хотя бы 2 города
         if(selectedCities.length < 2) {
             alert('Выберите хотя бы 2 города!');
             return;
         }
-        // Проверяем, есть ли города обеих стран
         const hasRussia = allZoneData.some(c => c.team === 'russia' && selectedCities.includes(c.name));
         const hasUkraine = allZoneData.some(c => c.team === 'ukraine' && selectedCities.includes(c.name));
         if(!hasRussia || !hasUkraine) {
@@ -938,16 +1012,11 @@
         myTeam = 'russia';
         enemyTeam = 'ukraine';
         citySelectModal.style.display = 'none';
-        // Запускаем игру
         initGameMapAndLogic();
     });
 
-    // =================================================================
-    // ОСТАЛЬНЫЕ КНОПКИ МЕНЮ
-    // =================================================================
-    // Песочница (сразу запускаем без выбора городов, используем все)
+    // Песочница
     document.getElementById('sandboxBtn').addEventListener('click', function() {
-        // Сброс
         if(gameActive) location.reload();
         selectedCities = allZoneData.map(c => c.name);
         difficulty = "NORMAL";
@@ -955,7 +1024,6 @@
         isSandbox = true;
         myTeam = 'russia';
         enemyTeam = 'ukraine';
-        // Сразу запускаем игру
         initGameMapAndLogic();
     });
 
@@ -964,7 +1032,6 @@
         const controls = document.getElementById('multiplayerControls');
         controls.style.display = controls.style.display === 'none' ? 'block' : 'none';
     });
-
     document.getElementById('createRoomBtn').addEventListener('click', function() {
         alert('Мультиплеер в разработке');
     });
@@ -973,14 +1040,11 @@
         if(code) alert('Мультиплеер в разработке');
         else alert('Введите код комнаты');
     });
-
     document.getElementById('tutorialBtn').addEventListener('click', function() {
         alert('Обучение: постройте аэродром → радар → ПВО → атакуйте врага. Выбирайте города перед игрой.');
     });
 
-    // =================================================================
-    // ПАНЕЛЬ ПОСТРОЕК (кнопка всегда видна)
-    // =================================================================
+    // Панель построек
     const buildToggle = document.getElementById('buildToggle');
     const buildMenu = document.getElementById('buildMenu');
     let buildMenuOpen = false;
@@ -1007,9 +1071,7 @@
     document.getElementById('buildRocketFactoryBtn').addEventListener('click', () => { buildMode = 'rocketFactory'; });
     document.getElementById('cancelBuild').addEventListener('click', () => { buildMode = null; });
 
-    // =================================================================
-    // СЧЁТЧИКИ И КНОПКИ МОДАЛКИ АТАКИ
-    // =================================================================
+    // Счётчики модалки атаки
     document.getElementById('countMinus').addEventListener('click', function() {
         if (attackCount > 1) attackCount--;
         document.getElementById('countValue').innerText = attackCount;
@@ -1039,10 +1101,7 @@
         closeAttackModal();
     });
 
-    // =================================================================
-    // ЗАПУСК ПРИ ЗАГРУЗКЕ
-    // =================================================================
-    console.log("✅ Игра загружена. Нажмите «Одиночная игра» для выбора городов.");
+    console.log("✅ Игра загружена. Нажмите «Одиночная игра» для выбора городов. Россия и Украина по 15 городов.");
 </script>
 </body>
 </html>
