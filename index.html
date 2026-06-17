@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sky in Fire — выбор городов (Россия и Украина)</title>
+    <title>Sky in Fire — выбор городов (военная тематика)</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-rotatedmarker/leaflet.rotatedMarker.js"></script>
@@ -255,10 +255,10 @@
 
 <script>
     // =================================================================
-    // 1. ДАННЫЕ ВСЕХ ГОРОДОВ (РАВНОЕ КОЛИЧЕСТВО)
+    // 1. ДАННЫЕ ВСЕХ ГОРОДОВ (ВОЕННАЯ ТЕМАТИКА, РАВНОЕ КОЛИЧЕСТВО)
     // =================================================================
     const allZoneData = [
-        // РОССИЯ (15 городов)
+        // РОССИЯ (16 городов)
         { name: 'МОСКВА', center: [55.7558,37.6173], team: 'russia', hp: 500, baseHp: 500 },
         { name: 'САНКТ-ПЕТЕРБУРГ', center: [59.9343,30.3351], team: 'russia', hp: 420, baseHp: 420 },
         { name: 'ЕКАТЕРИНБУРГ', center: [56.8389,60.6057], team: 'russia', hp: 380, baseHp: 380 },
@@ -270,11 +270,13 @@
         { name: 'ОМСК', center: [54.9885,73.3242], team: 'russia', hp: 310, baseHp: 310 },
         { name: 'РОСТОВ-НА-ДОНУ', center: [47.2357,39.7015], team: 'russia', hp: 350, baseHp: 350 },
         { name: 'УФА', center: [54.7348,55.9579], team: 'russia', hp: 320, baseHp: 320 },
+        { name: 'ПЕРМЬ', center: [58.0103,56.2506], team: 'russia', hp: 310, baseHp: 310 },
         { name: 'КРАСНОЯРСК', center: [56.0106,92.8526], team: 'russia', hp: 340, baseHp: 340 },
         { name: 'ВОРОНЕЖ', center: [51.6605,39.2003], team: 'russia', hp: 300, baseHp: 300 },
-        { name: 'ПЕРМЬ', center: [58.0103,56.2506], team: 'russia', hp: 310, baseHp: 310 },
         { name: 'ВОЛГОГРАД', center: [48.7047,44.5133], team: 'russia', hp: 320, baseHp: 320 },
-        // УКРАИНА (15 городов)
+        { name: 'БРЯНСК', center: [53.2433,34.3637], team: 'russia', hp: 290, baseHp: 290 },
+        { name: 'КУРСК', center: [51.7304,36.1937], team: 'russia', hp: 290, baseHp: 290 },
+        // УКРАИНА (16 городов)
         { name: 'КИЕВ', center: [50.4501,30.5234], team: 'ukraine', hp: 480, baseHp: 480 },
         { name: 'ХАРЬКОВ', center: [49.9935,36.2304], team: 'ukraine', hp: 400, baseHp: 400 },
         { name: 'ОДЕССА', center: [46.4825,30.7233], team: 'ukraine', hp: 380, baseHp: 380 },
@@ -289,11 +291,26 @@
         { name: 'ПОЛТАВА', center: [49.5883,34.5514], team: 'ukraine', hp: 290, baseHp: 290 },
         { name: 'ЧЕРНИГОВ', center: [51.4982,31.2893], team: 'ukraine', hp: 280, baseHp: 280 },
         { name: 'ЧЕРКАССЫ', center: [49.4444,32.0598], team: 'ukraine', hp: 280, baseHp: 280 },
-        { name: 'ЖИТОМИР', center: [50.2544,28.6586], team: 'ukraine', hp: 270, baseHp: 270 }
+        { name: 'ЖИТОМИР', center: [50.2544,28.6586], team: 'ukraine', hp: 270, baseHp: 270 },
+        { name: 'СУМЫ', center: [50.9077,34.7981], team: 'ukraine', hp: 270, baseHp: 270 }
     ];
 
     // =================================================================
-    // 2. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
+    // 2. ДАЛЬНОСТЬ ДЛЯ КАЖДОГО ТИПА ОРУЖИЯ (В КИЛОМЕТРАХ)
+    // =================================================================
+    const weaponRange = {
+        drone: 2000,      // Shahed-136 до 2000 км [reference:9][reference:10]
+        cruise: 2600,     // Калибр до 2600 км [reference:11]
+        ballistic: 1000,  // Искандер до 1000 км [reference:12]
+        hypersonic: 3000, // Гиперзвуковые до 3000 км [reference:13]
+        x101: 5500,       // X-101 до 5500 км [reference:14]
+        kalibr: 2600,     // Калибр до 2600 км [reference:15]
+        kinzhal: 2000,    // Кинжал до 2000 км [reference:16]
+        iskander: 1000    // Искандер до 1000 км [reference:17]
+    };
+
+    // =================================================================
+    // 3. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
     // =================================================================
     let map, gameActive = false;
     let resources = 300;
@@ -559,13 +576,34 @@
         return targets;
     }
 
-    // ---- Атака ----
+    // ---- Функция расчёта расстояния между двумя точками (в километрах) ----
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // радиус Земли в км
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    // ---- Атака с проверкой дальности ----
     function launchAttack(airport, targetObj, type, count){
         let weapon = weaponTypes[type];
         let costPerUnit = weapon.cost;
         if(!isSandbox && resources < costPerUnit * count){ alert("Не хватает энергии"); return false; }
         let fromLatLng = airport.getLatLng();
         if (!fromLatLng || typeof fromLatLng.lat !== 'number') return false;
+
+        // ===== ПРОВЕРКА ДАЛЬНОСТИ =====
+        const maxRange = weaponRange[type] || 2000; // по умолчанию 2000 км
+        const distance = calculateDistance(fromLatLng.lat, fromLatLng.lng, targetObj.lat, targetObj.lng);
+        if (distance > maxRange) {
+            alert(`❌ Цель слишком далеко!\nРасстояние: ${Math.round(distance)} км\nМаксимальная дальность ${weapon.name}: ${maxRange} км`);
+            return false;
+        }
+
         for(let i=0;i<count;i++){
             if(!isSandbox) resources -= costPerUnit;
             let offset = (i - (count-1)/2) * 0.03;
@@ -796,7 +834,7 @@
         types.forEach(type => {
             let w = weaponTypes[type];
             let card = document.createElement('div'); card.className = 'weapon-card'; if(attackType === type) card.classList.add('selected');
-            card.innerHTML = `<img src="images/${w.img}" alt="${w.name}" onerror="this.style.display='none'"><div class="weapon-name">${w.name}</div><div class="weapon-stats">💥 Урон: ${w.damage}<br>⚡ Цена: ${w.cost}</div>`;
+            card.innerHTML = `<img src="images/${w.img}" alt="${w.name}" onerror="this.style.display='none'"><div class="weapon-name">${w.name}</div><div class="weapon-stats">💥 Урон: ${w.damage}<br>⚡ Цена: ${w.cost}<br>📏 Дальность: ${weaponRange[type]} км</div>`;
             card.onclick = () => { attackType = type; updateCostDisplay(); document.querySelectorAll('.weapon-card').forEach(c=>c.classList.remove('selected')); card.classList.add('selected'); };
             container.appendChild(card);
         });
@@ -877,14 +915,12 @@
     const startGameBtn = document.getElementById('startGameBtn');
     const closeCityBtn = document.getElementById('closeCityModal');
 
-    // Создаём две колонки: Россия слева, Украина справа
     function renderCityGrid() {
         const container = document.getElementById('cityGridContainer');
         container.innerHTML = '';
         const russiaCities = allZoneData.filter(c => c.team === 'russia');
         const ukraineCities = allZoneData.filter(c => c.team === 'ukraine');
 
-        // Колонка Россия
         const colRussia = document.createElement('div');
         colRussia.className = 'city-column';
         const h3Russia = document.createElement('h3');
@@ -917,7 +953,6 @@
         });
         container.appendChild(colRussia);
 
-        // Колонка Украина
         const colUkraine = document.createElement('div');
         colUkraine.className = 'city-column';
         const h3Ukraine = document.createElement('h3');
@@ -951,7 +986,6 @@
         container.appendChild(colUkraine);
     }
 
-    // Обработчики для кнопок "Выбрать все" / "Снять все"
     document.getElementById('selectAllCities').addEventListener('click', () => {
         selectedCities = allZoneData.map(c => c.name);
         renderCityGrid();
@@ -963,7 +997,6 @@
         document.querySelectorAll('#cityGridContainer input[type="checkbox"]').forEach(cb => cb.checked = false);
     });
 
-    // Выбор сложности в модалке
     let selectedDifficulty = 'NORMAL';
     document.querySelectorAll('#cityDifficultySelect .diff-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -973,14 +1006,11 @@
         });
     });
 
-    // Открытие модалки при нажатии "Одиночная игра"
     document.getElementById('singleBtn').addEventListener('click', function() {
         if (gameActive) { location.reload(); return; }
-        // Сбрасываем выбор городов на все
         selectedCities = allZoneData.map(c => c.name);
         renderCityGrid();
         document.querySelectorAll('#cityGridContainer input[type="checkbox"]').forEach(cb => cb.checked = true);
-        // Сложность по умолчанию NORMAL
         document.querySelectorAll('#cityDifficultySelect .diff-btn').forEach(b => b.classList.remove('selected'));
         document.querySelector('#cityDifficultySelect .diff-btn[data-diff="NORMAL"]').classList.add('selected');
         selectedDifficulty = 'NORMAL';
@@ -988,13 +1018,11 @@
         document.getElementById('menuScreen').style.display = 'none';
     });
 
-    // Закрытие модалки
     closeCityBtn.addEventListener('click', function() {
         citySelectModal.style.display = 'none';
         document.getElementById('menuScreen').style.display = 'flex';
     });
 
-    // Начать игру
     startGameBtn.addEventListener('click', function() {
         if(selectedCities.length < 2) {
             alert('Выберите хотя бы 2 города!');
@@ -1015,7 +1043,9 @@
         initGameMapAndLogic();
     });
 
-    // Песочница
+    // =================================================================
+    // ОСТАЛЬНЫЕ КНОПКИ
+    // =================================================================
     document.getElementById('sandboxBtn').addEventListener('click', function() {
         if(gameActive) location.reload();
         selectedCities = allZoneData.map(c => c.name);
@@ -1027,7 +1057,6 @@
         initGameMapAndLogic();
     });
 
-    // Мультиплеер (заглушка)
     document.getElementById('multiplayerBtn').addEventListener('click', function() {
         const controls = document.getElementById('multiplayerControls');
         controls.style.display = controls.style.display === 'none' ? 'block' : 'none';
@@ -1041,10 +1070,12 @@
         else alert('Введите код комнаты');
     });
     document.getElementById('tutorialBtn').addEventListener('click', function() {
-        alert('Обучение: постройте аэродром → радар → ПВО → атакуйте врага. Выбирайте города перед игрой.');
+        alert('Обучение: постройте аэродром → радар → ПВО → атакуйте врага. У каждого оружия своя дальность — если цель слишком далеко, атака не пройдёт.');
     });
 
-    // Панель построек
+    // =================================================================
+    // ПАНЕЛЬ ПОСТРОЕК
+    // =================================================================
     const buildToggle = document.getElementById('buildToggle');
     const buildMenu = document.getElementById('buildMenu');
     let buildMenuOpen = false;
@@ -1071,7 +1102,9 @@
     document.getElementById('buildRocketFactoryBtn').addEventListener('click', () => { buildMode = 'rocketFactory'; });
     document.getElementById('cancelBuild').addEventListener('click', () => { buildMode = null; });
 
-    // Счётчики модалки атаки
+    // =================================================================
+    // СЧЁТЧИКИ МОДАЛКИ АТАКИ
+    // =================================================================
     document.getElementById('countMinus').addEventListener('click', function() {
         if (attackCount > 1) attackCount--;
         document.getElementById('countValue').innerText = attackCount;
@@ -1101,7 +1134,7 @@
         closeAttackModal();
     });
 
-    console.log("✅ Игра загружена. Нажмите «Одиночная игра» для выбора городов. Россия и Украина по 15 городов.");
+    console.log("✅ Игра загружена. Добавлена реалистичная дальность для каждого типа оружия. Если цель слишком далеко — атака не пройдёт.");
 </script>
 </body>
 </html>
