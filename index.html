@@ -3,17 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sky in Fire — выбор городов и сложности</title>
+    <title>Sky in Fire — тестовая версия</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-rotatedmarker/leaflet.rotatedMarker.js"></script>
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
-        /* ====== ВСЕ СТИЛИ ====== */
+        /* ====== БАЗОВЫЕ СТИЛИ ====== */
         *{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent}
         body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0f12;overflow:hidden;height:100vh;color:#eef;touch-action:manipulation}
         .screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;justify-content:center;align-items:center;z-index:2000;background:radial-gradient(circle at 20% 30%,#0a1f1a,#030a08)}
@@ -34,14 +31,6 @@
         .country-btn{flex:1;min-width:80px;background:#3a5e5e;border:2px solid #fff;border-radius:40px;padding:12px 8px;cursor:pointer;font-weight:700;transition:.1s;font-size:clamp(.8rem,1.5vw,1.1rem);text-align:center;touch-action:manipulation}
         .country-btn.selected{background:#ffaa33;border-color:gold;color:#1a2a2a}
         .ready-btn{background:#ffaa33!important;color:#1a2a2a!important}
-        .auth-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.96);z-index:10000;display:flex;justify-content:center;align-items:center}
-        .auth-card{background:rgba(20,30,35,.95);backdrop-filter:blur(14px);border-radius:48px;padding:clamp(20px,4vw,40px) clamp(16px,3vw,32px);text-align:center;width:400px;max-width:92%;color:#fff;border:1px solid rgba(255,215,0,.3);box-shadow:0 25px 45px rgba(0,0,0,.5);max-height:95vh;overflow-y:auto}
-        .auth-card h2{font-size:clamp(1.6rem,4vw,2.2rem);margin-bottom:15px}
-        .auth-card input{width:100%;padding:clamp(12px,2.5vh,16px);margin:8px 0;border-radius:60px;border:none;background:rgba(42,58,58,.8);color:#fff;text-align:center;font-size:clamp(1rem,2vw,1.2rem)}
-        .auth-card button{width:100%;background:#ffaa33;border:none;padding:clamp(12px,2.5vh,16px);border-radius:60px;font-weight:700;cursor:pointer;margin-top:10px;color:#1a2a2a;font-size:clamp(1rem,2vw,1.2rem);touch-action:manipulation}
-        .auth-card button:hover{background:#ffcc66}
-        .auth-card .error-msg{color:#ff6666;margin-top:8px;font-size:clamp(.8rem,1.5vw,1rem)}
-        .auth-card .toggle-link{margin-top:12px;font-size:clamp(.8rem,1.5vw,1rem);cursor:pointer;color:#88aaff}
         #gameHUD{position:fixed;top:8px;left:8px;right:8px;background:rgba(5,10,15,.88);backdrop-filter:blur(12px);border-radius:clamp(16px,3vw,30px);padding:clamp(4px,1vh,10px) clamp(8px,2vw,16px);z-index:1500;border:1px solid rgba(0,255,170,.3);box-shadow:0 0 20px rgba(0,255,170,.15);font-weight:700;display:flex;flex-direction:column;gap:2px;font-size:clamp(.6rem,1.6vw,1rem);min-height:clamp(50px,10vh,70px)}
         .hud-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px}
         .hud-bottom{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px}
@@ -78,18 +67,22 @@
         .modal button{width:100%;padding:clamp(10px,2vh,14px);border-radius:40px;border:none;font-weight:700;cursor:pointer;margin-top:6px;font-size:clamp(.9rem,2vw,1.1rem);touch-action:manipulation}
         .modal button:active{transform:scale(.96)}
         #costDisplay{margin:8px 0;font-weight:700;font-size:clamp(.9rem,2vw,1.2rem)}
-        .ranking-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(180deg,#0d1a1a,#020808);border-radius:40px;padding:clamp(20px,4vw,35px);z-index:5000;color:#fff;width:clamp(320px,90vw,500px);max-height:85vh;overflow-y:auto;border:2px solid #ffaa33;box-shadow:0 0 50px rgba(255,170,51,0.3)}
-        .ranking-modal h2{font-size:clamp(1.6rem,4vw,2.2rem);text-align:center;margin-bottom:15px;color:#ffaa33}
-        .ranking-modal .close-btn{position:absolute;top:10px;right:20px;font-size:2rem;cursor:pointer;color:#aaa;transition:.2s}
-        .ranking-modal .close-btn:hover{color:#fff}
-        .ranking-list{list-style:none;padding:0}
-        .ranking-list li{display:flex;justify-content:space-between;padding:10px 15px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:clamp(.9rem,2vw,1.1rem)}
-        .ranking-list li:nth-child(1){background:rgba(255,215,0,0.1);border-radius:10px 10px 0 0}
-        .ranking-list li:nth-child(2){background:rgba(192,192,192,0.08)}
-        .ranking-list li:nth-child(3){background:rgba(205,127,50,0.08)}
-        .ranking-list .rank{color:#ffaa33;font-weight:700;margin-right:10px}
-        .ranking-list .elo{color:#00ffaa;font-weight:700}
-        .no-players{text-align:center;padding:20px;color:#888}
+        /* Модалка выбора городов */
+        .city-select-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(180deg,#0d1a1a,#020808);border-radius:40px;padding:clamp(20px,4vw,35px);z-index:5000;color:#fff;width:clamp(320px,90vw,550px);max-height:85vh;overflow-y:auto;border:2px solid #ffaa33;box-shadow:0 0 50px rgba(255,170,51,0.3)}
+        .city-select-modal h2{font-size:clamp(1.6rem,4vw,2.2rem);text-align:center;margin-bottom:15px;color:#ffaa33}
+        .city-select-modal .close-btn{position:absolute;top:10px;right:20px;font-size:2rem;cursor:pointer;color:#aaa;transition:.2s}
+        .city-select-modal .close-btn:hover{color:#fff}
+        .city-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:15px 0;max-height:200px;overflow-y:auto;padding:5px}
+        .city-item{display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(255,255,255,0.05);border-radius:10px;cursor:pointer;transition:.2s}
+        .city-item:hover{background:rgba(255,255,255,0.1)}
+        .city-item input[type="checkbox"]{width:18px;height:18px;cursor:pointer;accent-color:#ffaa33}
+        .city-item label{font-size:clamp(.9rem,2vw,1.1rem);cursor:pointer;flex:1}
+        .city-item .country-badge{font-size:.7rem;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.15)}
+        .city-select-modal .difficulty-select-inner{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:15px 0}
+        .city-select-modal .diff-btn{background:#3a5e5e;border:2px solid #555;border-radius:40px;padding:8px 18px;cursor:pointer;font-weight:700;transition:.1s;font-size:clamp(.8rem,1.5vw,1rem);touch-action:manipulation;color:#fff}
+        .city-select-modal .diff-btn.selected{background:#ffaa33;border-color:gold;color:#1a2a2a}
+        .city-select-modal .start-btn{background:#ffaa33;border:none;padding:14px;border-radius:60px;font-size:1.2rem;font-weight:700;color:#1a2a2a;cursor:pointer;width:100%;margin-top:10px;transition:.2s}
+        .city-select-modal .start-btn:hover{background:#ffcc66}
         .zone-marker{background:rgba(0,0,0,.8);border-radius:16px;padding:4px 8px;text-align:center;font-weight:700;color:#fff;font-size:clamp(.5rem,1vw,.8rem);box-shadow:0 0 10px rgba(0,0,0,.5);white-space:nowrap}
         .hidden-projectile{display:none!important}
         .loading-indicator{background:rgba(0,0,0,.7);color:#fff;padding:8px 16px;border-radius:30px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3000;font-size:clamp(.9rem,2vw,1.2rem)}
@@ -98,36 +91,63 @@
         @keyframes radarSpin{0%{transform:translateX(-50%) rotate(0)}100%{transform:translateX(-50%) rotate(360deg)}}
         .leaflet-marker-icon{transform-origin:center center}
         .leaflet-control-zoom{display:none!important}
-        /* Модальное окно выбора городов и сложности */
-        #citySelectModal .city-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;text-align:left;margin:10px 0;max-height:200px;overflow-y:auto}
-        #citySelectModal .city-grid label{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:8px;background:rgba(255,255,255,0.05);cursor:pointer}
-        #citySelectModal .city-grid label input[type="checkbox"]{width:18px;height:18px;accent-color:#ffaa33;cursor:pointer}
-        #citySelectModal .diff-buttons{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:8px 0}
-        #citySelectModal .diff-buttons .diff-btn{background:#3a5e5e;border:2px solid #fff;border-radius:40px;padding:6px 14px;cursor:pointer;font-weight:700;transition:.1s;font-size:clamp(.7rem,1.5vw,1rem);touch-action:manipulation;color:#fff}
-        #citySelectModal .diff-buttons .diff-btn.selected{background:#ffaa33;border-color:gold;color:#1a2a2a}
-        #citySelectModal .city-section{margin:5px 0;font-weight:600;color:#ffaa33;font-size:clamp(.9rem,1.8vw,1.1rem)}
-        @media (max-width:600px){#gameHUD{padding:4px 8px;font-size:.7rem;min-height:auto}.hud-top,.hud-bottom{flex-wrap:wrap;justify-content:center;gap:2px}.hud-resource,.hud-rank{font-size:.8rem;padding:2px 6px}.health-bars{justify-content:space-around;padding:2px 4px}.health-bar{font-size:.6rem;gap:2px}.bar-bg{width:50px;height:5px}#buildToggle{font-size:.9rem;padding:6px 12px;min-height:40px;min-width:44px}#buildMenu .build-btn{font-size:.8rem;padding:4px 10px;white-space:normal}.modal{width:95vw;padding:12px}.modal .weapon-grid{grid-template-columns:1fr 1fr;gap:6px;max-height:200px}.modal .weapon-card{padding:4px}.modal .weapon-card img{height:40px}.card,.auth-card{padding:16px;border-radius:32px;width:100%;max-width:95%}.logo{font-size:2rem}.difficulty-btn{font-size:.6rem;padding:4px 8px}.card button,.auth-card button{font-size:.9rem;padding:10px;margin:6px 0}.card input,.auth-card input{font-size:.9rem;padding:10px}#citySelectModal .city-grid{grid-template-columns:1fr 1fr}}
-        @media (min-width:601px) and (max-width:900px){#gameHUD{padding:4px 12px;font-size:.8rem}.bar-bg{width:80px;height:7px}.modal{width:80vw;padding:20px}.card,.auth-card{padding:30px 24px}.logo{font-size:2.5rem}}
-        @media (max-width:800px) and (orientation:landscape){#gameHUD{flex-direction:row;flex-wrap:wrap;font-size:.6rem;padding:2px 8px;min-height:30px}.hud-resource,.hud-rank{font-size:.7rem;padding:2px 6px}.bar-bg{width:40px;height:4px}#buildToggle{padding:6px 12px;font-size:.8rem;min-height:30px}#buildMenu .build-btn{font-size:.7rem;padding:4px 10px}.modal{width:70vw;max-height:80vh;padding:12px}.modal .weapon-grid{max-height:150px}.modal .weapon-card img{height:30px}}
-        @media (max-width:400px){.card,.auth-card{padding:12px 10px;border-radius:24px}.logo{font-size:1.6rem}.difficulty-btn{font-size:.5rem;padding:3px 6px}.card button,.auth-card button{font-size:.8rem;padding:8px;margin:4px 0}.card input,.auth-card input{font-size:.8rem;padding:8px}.bar-bg{width:35px;height:4px}.modal{padding:10px;width:98vw}.modal h3{font-size:1rem}.modal .weapon-card{padding:4px}.modal .weapon-card img{height:30px}#citySelectModal .city-grid{grid-template-columns:1fr}}
+        @media (max-width:600px){
+            #gameHUD{padding:4px 8px;font-size:.7rem;min-height:auto}
+            .hud-top,.hud-bottom{flex-wrap:wrap;justify-content:center;gap:2px}
+            .hud-resource,.hud-rank{font-size:.8rem;padding:2px 6px}
+            .health-bars{justify-content:space-around;padding:2px 4px}
+            .health-bar{font-size:.6rem;gap:2px}
+            .bar-bg{width:50px;height:5px}
+            #buildToggle{font-size:.9rem;padding:6px 12px;min-height:40px;min-width:44px}
+            #buildMenu .build-btn{font-size:.8rem;padding:4px 10px;white-space:normal}
+            .modal{width:95vw;padding:12px}
+            .modal .weapon-grid{grid-template-columns:1fr 1fr;gap:6px;max-height:200px}
+            .modal .weapon-card{padding:4px}
+            .modal .weapon-card img{height:40px}
+            .card,.auth-card{padding:16px;border-radius:32px;width:100%;max-width:95%}
+            .logo{font-size:2rem}
+            .difficulty-btn{font-size:.6rem;padding:4px 8px}
+            .card button,.auth-card button{font-size:.9rem;padding:10px;margin:6px 0}
+            .card input,.auth-card input{font-size:.9rem;padding:10px}
+            .city-select-modal{width:95vw;padding:16px}
+            .city-grid{grid-template-columns:1fr;max-height:150px}
+        }
+        @media (min-width:601px) and (max-width:900px){
+            #gameHUD{padding:4px 12px;font-size:.8rem}
+            .bar-bg{width:80px;height:7px}
+            .modal{width:80vw;padding:20px}
+            .card,.auth-card{padding:30px 24px}
+            .logo{font-size:2.5rem}
+        }
+        @media (max-width:800px) and (orientation:landscape){
+            #gameHUD{flex-direction:row;flex-wrap:wrap;font-size:.6rem;padding:2px 8px;min-height:30px}
+            .hud-resource,.hud-rank{font-size:.7rem;padding:2px 6px}
+            .bar-bg{width:40px;height:4px}
+            #buildToggle{padding:6px 12px;font-size:.8rem;min-height:30px}
+            #buildMenu .build-btn{font-size:.7rem;padding:4px 10px}
+            .modal{width:70vw;max-height:80vh;padding:12px}
+            .modal .weapon-grid{max-height:150px}
+            .modal .weapon-card img{height:30px}
+            .city-select-modal{width:80vw;padding:12px}
+            .city-grid{max-height:120px}
+        }
+        @media (max-width:400px){
+            .card,.auth-card{padding:12px 10px;border-radius:24px}
+            .logo{font-size:1.6rem}
+            .difficulty-btn{font-size:.5rem;padding:3px 6px}
+            .card button,.auth-card button{font-size:.8rem;padding:8px;margin:4px 0}
+            .card input,.auth-card input{font-size:.8rem;padding:8px}
+            .bar-bg{width:35px;height:4px}
+            .modal{padding:10px;width:98vw}
+            .modal h3{font-size:1rem}
+            .modal .weapon-card{padding:4px}
+            .modal .weapon-card img{height:30px}
+            .city-select-modal{padding:12px}
+            .city-item label{font-size:.8rem}
+        }
     </style>
 </head>
 <body>
-
-<!-- Оверлей авторизации -->
-<div id="authOverlay" class="auth-overlay">
-    <div class="auth-card">
-        <h2 id="authTitle">ВХОД</h2>
-        <input type="text" id="authLogin" placeholder="Логин">
-        <input type="password" id="authPassword" placeholder="Пароль">
-        <div id="authKeyGroup" style="display:none;">
-            <input type="text" id="authKey" placeholder="Лицензионный ключ">
-        </div>
-        <button id="authSubmitBtn">ВОЙТИ</button>
-        <div id="authMessage" class="error-msg"></div>
-        <div class="toggle-link" id="toggleAuthMode">Нет аккаунта? Зарегистрироваться</div>
-    </div>
-</div>
 
 <!-- Главное меню -->
 <div id="menuScreen" class="screen">
@@ -135,17 +155,10 @@
     <div class="scan-line"></div>
     <div class="card">
         <div class="logo">☢️ SKY IN FIRE</div>
-        <div class="difficulty-select">
-            <div id="diffEasy" class="difficulty-btn">EASY</div>
-            <div id="diffNormal" class="difficulty-btn selected">NORMAL</div>
-            <div id="diffHard" class="difficulty-btn">HARD</div>
-            <div id="diffExtreme" class="difficulty-btn">EXTREME</div>
-        </div>
         <button id="singleBtn">⚔️ ОДИНОЧНАЯ ИГРА</button>
         <button id="sandboxBtn">🏖️ ПЕСОЧНИЦА</button>
         <button id="multiplayerBtn">🌐 МУЛЬТИПЛЕЕР 1v1</button>
         <button id="tutorialBtn">📖 ОБУЧЕНИЕ</button>
-        <button id="rankBtn">🏆 ТОП ИГРОКОВ</button>
         <div id="multiplayerControls" style="display:none; margin-top:10px;">
             <button id="createRoomBtn">СОЗДАТЬ КОМНАТУ</button>
             <div style="display:flex; gap:8px; align-items:center; margin:8px 0;">
@@ -154,11 +167,10 @@
             </div>
             <div id="roomDisplay" style="font-size:clamp(.8rem,1.5vw,1rem); margin-top:5px;"></div>
         </div>
-        <button id="logoutBtn" style="margin-top:15px; background:#aa3333;">🚪 ВЫЙТИ ИЗ АККАУНТА</button>
     </div>
 </div>
 
-<!-- Лобби -->
+<!-- Лобби (мультиплеер) -->
 <div id="lobbyScreen" class="screen" style="display:none;">
     <div class="card" style="width:400px; max-width:92%;">
         <h1>ЛОББИ</h1>
@@ -172,35 +184,27 @@
 </div>
 
 <!-- Модальное окно выбора городов и сложности -->
-<div id="citySelectModal" class="modal" style="display:none; width:clamp(300px, 90vw, 500px); max-height:85vh; overflow-y:auto; text-align:left;">
-    <h2 style="text-align:center;">Выбор сложности и городов</h2>
-    <div style="margin:10px 0;">
-        <label style="display:block; margin-bottom:5px; font-weight:600;">Сложность:</label>
-        <div class="diff-buttons" id="cityDiffButtons">
+<div id="citySelectModal" class="city-select-modal" style="display:none;">
+    <span class="close-btn" id="closeCityModal">&times;</span>
+    <h2>⚙️ НАСТРОЙКИ ИГРЫ</h2>
+    <div style="margin:10px 0; text-align:center;">
+        <span style="font-size:1.1rem; font-weight:700;">Сложность</span>
+        <div class="difficulty-select-inner" id="cityDifficultySelect">
             <button class="diff-btn" data-diff="EASY">EASY</button>
             <button class="diff-btn selected" data-diff="NORMAL">NORMAL</button>
             <button class="diff-btn" data-diff="HARD">HARD</button>
             <button class="diff-btn" data-diff="EXTREME">EXTREME</button>
         </div>
     </div>
-    <div style="margin:10px 0;">
-        <label style="display:block; margin-bottom:5px; font-weight:600;">Выберите города:</label>
-        <div id="cityGrid" class="city-grid"></div>
-        <div style="margin-top:8px; font-size:0.8rem; opacity:0.6; text-align:center;">Выберите хотя бы 2 города, по одному из каждой страны</div>
+    <div style="margin:10px 0; text-align:center;">
+        <span style="font-size:1.1rem; font-weight:700;">Выберите города</span>
+        <div id="cityList" class="city-grid"></div>
+        <div style="margin-top:8px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+            <button id="selectAllCities" style="background:#3a5e5e; border:none; color:#fff; padding:6px 16px; border-radius:40px; cursor:pointer; font-size:.9rem;">Выбрать все</button>
+            <button id="deselectAllCities" style="background:#5e3a3a; border:none; color:#fff; padding:6px 16px; border-radius:40px; cursor:pointer; font-size:.9rem;">Снять все</button>
+        </div>
     </div>
-    <div style="display:flex; gap:10px; justify-content:center; margin-top:15px;">
-        <button id="startGameBtn" style="background:#ffaa33; color:#1a2a2a; padding:12px 24px; border-radius:60px; border:none; font-weight:700; font-size:clamp(1rem,2vw,1.1rem); cursor:pointer; flex:1;">Начать игру</button>
-        <button id="closeCitySelectBtn" style="background:#555; color:#fff; padding:12px 24px; border-radius:60px; border:none; font-weight:700; font-size:clamp(1rem,2vw,1.1rem); cursor:pointer;">Отмена</button>
-    </div>
-</div>
-
-<!-- Модалка рейтинга -->
-<div id="rankModal" class="ranking-modal" style="display:none;">
-    <span class="close-btn" id="closeRankModal">&times;</span>
-    <h2>🏆 ТОП ИГРОКОВ</h2>
-    <ul id="rankList" class="ranking-list">
-        <li style="text-align:center; color:#888; padding:20px;">Загрузка...</li>
-    </ul>
+    <button id="startGameBtn" class="start-btn">▶️ НАЧАТЬ ИГРУ</button>
 </div>
 
 <!-- Модалка атаки -->
@@ -245,501 +249,34 @@
 
 <script>
     // =================================================================
-    // 1. НАСТРОЙКИ FIREBASE (ЗАМЕНИТЕ НА СВОИ ДАННЫЕ)
+    // ПОЛНЫЙ ИГРОВОЙ ДВИЖОК (БЕЗ АВТОРИЗАЦИИ)
     // =================================================================
-    const firebaseConfig = {
-        apiKey: "AIzaSyCksMAKAI1U2gXRHefO0vAZYbY4Y6",
-        authDomain: "keys-c7467.firebaseacom",
-        databaseURL: "httpskeys-c7467-default-rtdb.firebaseio.com",
-        projectId: "kec7467",
-        storageBucket: "keys-c7467.firebasestoapp",
-        messagingSenderId: "57316142",
-        appId: "1:57316142436fe203312d2a18079f0241"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const usersRef = db.ref('users');
-    const sessionsRef = db.ref('sessions');
-    const gamesRef = db.ref('games');
-    const validKeysRef = db.ref('validKeys');
 
-    // =================================================================
-    // 2. ХЕШИРОВАНИЕ
-    // =================================================================
-    function hashSHA256(text) {
-        return CryptoJS.SHA256(text).toString(CryptoJS.enc.Hex);
-    }
-
-    // =================================================================
-    // 3. УПРАВЛЕНИЕ АККАУНТАМИ И СЕССИЯМИ
-    // =================================================================
-    let currentUser = null;
-    let currentSessionToken = null;
-    const authOverlay = document.getElementById('authOverlay');
-    const authLogin = document.getElementById('authLogin');
-    const authPassword = document.getElementById('authPassword');
-    const authKeyGroup = document.getElementById('authKeyGroup');
-    const authKey = document.getElementById('authKey');
-    const authSubmitBtn = document.getElementById('authSubmitBtn');
-    const authMessage = document.getElementById('authMessage');
-    const authTitle = document.getElementById('authTitle');
-    const toggleLink = document.getElementById('toggleAuthMode');
-    let isLoginMode = true;
-
-    function showKeyInput() { authKeyGroup.style.display = 'block'; authSubmitBtn.innerText = "АКТИВИРОВАТЬ КЛЮЧ"; }
-    function toggleMode() {
-        isLoginMode = !isLoginMode;
-        authTitle.innerText = isLoginMode ? "ВХОД" : "РЕГИСТРАЦИЯ";
-        authSubmitBtn.innerText = isLoginMode ? "ВОЙТИ" : "ЗАРЕГИСТРИРОВАТЬСЯ";
-        authMessage.innerText = "";
-        authKeyGroup.style.display = 'none';
-        authLogin.style.display = 'block';
-        authPassword.style.display = 'block';
-        toggleLink.style.display = 'block';
-        toggleLink.innerText = isLoginMode ? "Нет аккаунта? Зарегистрироваться" : "Уже есть аккаунт? Войти";
-    }
-
-    function register(login, password) {
-        if(!login || !password) { authMessage.innerText = "Введите логин и пароль"; return false; }
-        const passwordHash = hashSHA256(password);
-        usersRef.child(login).get().then(snapshot => {
-            if(snapshot.exists()) { authMessage.innerText = "Аккаунт уже существует!"; }
-            else {
-                usersRef.child(login).set({
-                    passwordHash: passwordHash,
-                    keyUsed: null,
-                    gameData: null,
-                    elo: 1000
-                }).then(() => {
-                    authMessage.innerText = "Аккаунт создан! Теперь войдите.";
-                    toggleMode();
-                }).catch(err => {
-                    authMessage.innerText = "Ошибка записи в БД: " + err.message;
-                });
-            }
-        }).catch(err => { authMessage.innerText = "Ошибка проверки: " + err.message; });
-        return false;
-    }
-
-    async function login(login, password) {
-        if(!login || !password) { authMessage.innerText = "Введите логин и пароль"; return false; }
-        try {
-            const snapshot = await usersRef.child(login).get();
-            if(!snapshot.exists()) { authMessage.innerText = "Аккаунт не найден"; return false; }
-            const userData = snapshot.val();
-            const passwordHash = hashSHA256(password);
-            if(userData.passwordHash !== passwordHash) {
-                authMessage.innerText = "Неверный пароль";
-                return false;
-            }
-            currentUser = login;
-            const token = btoa(login + ":" + Date.now() + ":" + Math.random().toString(36));
-            currentSessionToken = token;
-            await sessionsRef.child(token).set({ login: login, createdAt: Date.now() });
-            localStorage.setItem("skyfire_session_token", token);
-            authMessage.innerText = "Вход выполнен!";
-            if(userData.keyUsed) { loadGameForUser(userData); }
-            else {
-                authTitle.innerText = "АКТИВАЦИЯ ЛИЦЕНЗИИ";
-                authLogin.style.display = 'none';
-                authPassword.style.display = 'none';
-                toggleLink.style.display = 'none';
-                authMessage.innerText = "Введите лицензионный ключ";
-                showKeyInput();
-            }
-            return true;
-        } catch(err) { authMessage.innerText = "Ошибка: " + err.message; return false; }
-    }
-
-    async function activateKey(key) {
-        if(!key) { authMessage.innerText = "Введите ключ"; return false; }
-        // Проверяем, существует ли ключ в Firebase
-        const allKeysSnap = await validKeysRef.once('value');
-        const allKeys = allKeysSnap.val();
-        if(!allKeys) {
-            authMessage.innerText = "Нет действительных ключей в базе";
-            return false;
-        }
-        const isValid = Object.values(allKeys).includes(key);
-        if(!isValid) {
-            authMessage.innerText = "Неверный ключ";
-            return false;
-        }
-        const keyHash = hashSHA256(key);
-        const usedSnap = await db.ref('usedKeys/' + keyHash).get();
-        if(usedSnap.exists()) {
-            authMessage.innerText = "Этот ключ уже был использован другим игроком!";
-            return false;
-        }
-        await db.ref('usedKeys/' + keyHash).set(true);
-        const userRef = usersRef.child(currentUser);
-        const userSnap = await userRef.get();
-        if(!userSnap.exists()) {
-            authMessage.innerText = "Ошибка: пользователь не найден";
-            return false;
-        }
-        await userRef.update({ keyUsed: keyHash });
-        authMessage.innerText = "Ключ активирован! Запуск игры...";
-        const updatedData = (await userRef.get()).val();
-        loadGameForUser(updatedData);
-        return true;
-    }
-
-    function loadGameForUser(userData) {
-        if(userData.gameData) {
-            try {
-                const data = JSON.parse(userData.gameData);
-                if(data.playerXP) playerXP = data.playerXP;
-                if(data.playerStats) playerStats = data.playerStats;
-                if(data.difficulty) difficulty = data.difficulty;
-                updateRankUI();
-                document.querySelectorAll('.difficulty-btn').forEach(btn=>btn.classList.remove('selected'));
-                if(difficulty === "EASY") document.getElementById('diffEasy').classList.add('selected');
-                else if(difficulty === "NORMAL") document.getElementById('diffNormal').classList.add('selected');
-                else if(difficulty === "HARD") document.getElementById('diffHard').classList.add('selected');
-                else if(difficulty === "EXTREME") document.getElementById('diffExtreme').classList.add('selected');
-            } catch(e) {}
-        }
-        authOverlay.style.display = 'none';
-        document.getElementById('menuScreen').style.display = 'flex';
-        if(window.saveInterval) clearInterval(window.saveInterval);
-        window.saveInterval = setInterval(() => {
-            if(currentUser) {
-                const data = JSON.stringify({ playerXP, playerStats, difficulty });
-                usersRef.child(currentUser).update({ gameData: data });
-            }
-        }, 30000);
-    }
-
-    async function restoreSession() {
-        const token = localStorage.getItem("skyfire_session_token");
-        if(!token) { authOverlay.style.display = 'flex'; return; }
-        try {
-            const snap = await sessionsRef.child(token).get();
-            if(!snap.exists()) {
-                localStorage.removeItem("skyfire_session_token");
-                authOverlay.style.display = 'flex';
-                return;
-            }
-            const sessionData = snap.val();
-            const login = sessionData.login;
-            const userSnap = await usersRef.child(login).get();
-            if(!userSnap.exists()) {
-                localStorage.removeItem("skyfire_session_token");
-                authOverlay.style.display = 'flex';
-                return;
-            }
-            currentUser = login; currentSessionToken = token;
-            const userData = userSnap.val();
-            const age = Date.now() - sessionData.createdAt;
-            if(age > 30*24*3600*1000) {
-                await sessionsRef.child(token).remove();
-                localStorage.removeItem("skyfire_session_token");
-                authOverlay.style.display = 'flex';
-                return;
-            }
-            if(userData.keyUsed) { loadGameForUser(userData); }
-            else {
-                authOverlay.style.display = 'flex';
-                authTitle.innerText = "АКТИВАЦИЯ ЛИЦЕНЗИИ";
-                authLogin.style.display = 'none'; authPassword.style.display = 'none';
-                toggleLink.style.display = 'none';
-                authMessage.innerText = "Введите лицензионный ключ";
-                showKeyInput();
-            }
-        } catch(err) { console.error("Ошибка восстановления сессии:", err); authOverlay.style.display = 'flex'; }
-    }
-
-    async function logout() {
-        if(window.saveInterval) clearInterval(window.saveInterval);
-        if(currentUser) {
-            const data = JSON.stringify({ playerXP, playerStats, difficulty });
-            await usersRef.child(currentUser).update({ gameData: data });
-        }
-        if(currentSessionToken) await sessionsRef.child(currentSessionToken).remove();
-        localStorage.removeItem("skyfire_session_token");
-        currentUser = null; currentSessionToken = null;
-        location.reload();
-    }
-
-    authSubmitBtn.onclick = async () => {
-        if(authKeyGroup.style.display === 'block') await activateKey(authKey.value.trim());
-        else if(isLoginMode) await login(authLogin.value.trim(), authPassword.value.trim());
-        else register(authLogin.value.trim(), authPassword.value.trim());
-    };
-    toggleLink.onclick = toggleMode;
-    restoreSession();
-
-    // =================================================================
-    // 4. СИСТЕМА ЭЛО
-    // =================================================================
-    async function updateElo(win, mode) {
-        if (!currentUser) return;
-        let eloChange = 0;
-        if (mode === 'multiplayer') {
-            eloChange = win ? 30 : -15;
-        } else {
-            // Используем выбранную сложность из модального окна или из глобальной переменной
-            const diff = window._selectedDifficulty || difficulty || "NORMAL";
-            switch (diff) {
-                case 'EASY': eloChange = win ? 10 : -5; break;
-                case 'NORMAL': eloChange = win ? 20 : -10; break;
-                case 'HARD': eloChange = win ? 30 : -15; break;
-                case 'EXTREME': eloChange = win ? 50 : -25; break;
-                default: eloChange = win ? 20 : -10;
-            }
-        }
-        const userRef = usersRef.child(currentUser);
-        const snap = await userRef.get();
-        if (!snap.exists()) return;
-        const currentElo = snap.val().elo || 1000;
-        const newElo = Math.max(0, currentElo + eloChange);
-        await userRef.update({ elo: newElo });
-        console.log(`Эло изменено на ${eloChange}, теперь ${newElo}`);
-    }
-
-    // =================================================================
-    // 5. ТОП ИГРОКОВ
-    // =================================================================
-    document.getElementById('rankBtn').onclick = function() {
-        const modal = document.getElementById('rankModal');
-        modal.style.display = 'block';
-        loadRanking();
-    };
-    document.getElementById('closeRankModal').onclick = function() {
-        document.getElementById('rankModal').style.display = 'none';
-    };
-    window.addEventListener('click', function(e) {
-        if (e.target === document.getElementById('rankModal')) {
-            document.getElementById('rankModal').style.display = 'none';
-        }
-    });
-
-    async function loadRanking() {
-        const list = document.getElementById('rankList');
-        list.innerHTML = '<li style="text-align:center; color:#888; padding:20px;">Загрузка...</li>';
-        try {
-            const snapshot = await usersRef.once('value');
-            const data = snapshot.val();
-            if (!data) {
-                list.innerHTML = '<li class="no-players">Нет игроков</li>';
-                return;
-            }
-            const players = Object.keys(data).map(key => ({
-                login: key,
-                elo: data[key].elo || 1000
-            })).sort((a,b) => b.elo - a.elo);
-            const top = players.slice(0, 10);
-            list.innerHTML = '';
-            top.forEach((p, index) => {
-                const li = document.createElement('li');
-                const rankSpan = document.createElement('span');
-                rankSpan.innerHTML = `<span class="rank">#${index+1}</span> ${p.login}`;
-                const eloSpan = document.createElement('span');
-                eloSpan.className = 'elo';
-                eloSpan.textContent = p.elo;
-                li.appendChild(rankSpan);
-                li.appendChild(eloSpan);
-                list.appendChild(li);
-            });
-        } catch(e) {
-            console.error('Ошибка загрузки рейтинга:', e);
-            list.innerHTML = '<li class="no-players">Ошибка загрузки</li>';
-        }
-    }
-
-    // =================================================================
-    // 6. МУЛЬТИПЛЕЕР
-    // =================================================================
-    let currentRoomId = null;
-    let gameListenerRef = null;
-    let isHost = false;
-    let mpGameRef = null;
-    let isMultiplayer = false;
-    let mpInitDone = false;
-
-    document.getElementById('multiplayerBtn').onclick = function() {
-        const controls = document.getElementById('multiplayerControls');
-        controls.style.display = controls.style.display === 'none' ? 'block' : 'none';
-    };
-
-    document.getElementById('createRoomBtn').onclick = function() {
-        if (!currentUser) { alert("Сначала войдите в аккаунт!"); return; }
-        const roomId = generateRoomId();
-        const gameData = {
-            host: currentUser,
-            players: {
-                [currentUser]: { team: 'russia', ready: false }
-            },
-            status: 'waiting',
-            createdAt: Date.now()
-        };
-        gamesRef.child(roomId).set(gameData).then(() => {
-            currentRoomId = roomId;
-            isHost = true;
-            document.getElementById('roomDisplay').innerHTML = `Комната создана! Код: <b>${roomId}</b>`;
-            document.getElementById('multiplayerControls').style.display = 'none';
-            enterLobby(roomId);
-        }).catch(err => alert("Ошибка создания комнаты: " + err.message));
-    };
-
-    document.getElementById('joinRoomBtn').onclick = function() {
-        const roomId = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-        if (!roomId) { alert("Введите код комнаты"); return; }
-        if (!currentUser) { alert("Сначала войдите в аккаунт!"); return; }
-        gamesRef.child(roomId).once('value').then(snapshot => {
-            if (!snapshot.exists()) { alert("Комната не найдена!"); return; }
-            const data = snapshot.val();
-            if (data.status === 'playing') { alert("Игра уже началась!"); return; }
-            if (data.players && data.players[currentUser]) { alert("Вы уже в этой комнате!"); return; }
-            const teams = Object.values(data.players).map(p => p.team);
-            let myTeam = 'ukraine';
-            if (!teams.includes('russia')) myTeam = 'russia';
-            else if (!teams.includes('ukraine')) myTeam = 'ukraine';
-            else { alert("В комнате уже два игрока!"); return; }
-            const updates = {};
-            updates[`players/${currentUser}`] = { team: myTeam, ready: false };
-            gamesRef.child(roomId).update(updates).then(() => {
-                currentRoomId = roomId;
-                isHost = false;
-                document.getElementById('roomDisplay').innerHTML = `Подключено к комнате: <b>${roomId}</b>`;
-                document.getElementById('multiplayerControls').style.display = 'none';
-                enterLobby(roomId);
-            });
-        }).catch(err => alert("Ошибка подключения: " + err.message));
-    };
-
-    function generateRoomId() {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789';
-        let id = '';
-        for (let i = 0; i < 6; i++) id += chars.charAt(Math.floor(Math.random() * chars.length));
-        return id;
-    }
-
-    function enterLobby(roomId) {
-        document.getElementById('menuScreen').style.display = 'none';
-        document.getElementById('lobbyScreen').style.display = 'flex';
-        document.getElementById('lobbyRoomCode').innerText = roomId;
-
-        if (gameListenerRef) gameListenerRef.off();
-        gameListenerRef = gamesRef.child(roomId);
-        gameListenerRef.on('value', snapshot => {
-            const data = snapshot.val();
-            if (!data) {
-                alert("Комната удалена!");
-                leaveLobby();
-                return;
-            }
-            updateLobbyUI(data);
-            if (data.status === 'playing' && !mpInitDone) {
-                mpInitDone = true;
-                startMultiplayerGame(roomId, data);
-            }
-        });
-    }
-
-    function updateLobbyUI(data) {
-        const players = data.players || {};
-        const p1 = Object.keys(players)[0] || '—';
-        const p2 = Object.keys(players)[1] || '—';
-        const p1Team = players[p1]?.team || '—';
-        const p2Team = players[p2]?.team || '—';
-        document.getElementById('player1Name').innerHTML = `${p1} (${p1Team === 'russia' ? '🇷🇺' : '🇺🇦'})`;
-        document.getElementById('player1Ready').innerText = players[p1]?.ready ? '✅' : '⚪';
-        document.getElementById('player2Name').innerHTML = `${p2} (${p2Team === 'russia' ? '🇷🇺' : '🇺🇦'})`;
-        document.getElementById('player2Ready').innerText = players[p2]?.ready ? '✅' : '⚪';
-        const allReady = Object.values(players).every(p => p.ready);
-        const count = Object.keys(players).length;
-        const statusEl = document.getElementById('lobbyStatus');
-        if (data.status === 'playing') {
-            statusEl.innerText = '🎮 Игра началась!';
-            statusEl.style.color = '#00ffaa';
-        } else if (count < 2) {
-            statusEl.innerText = '⏳ Ожидание второго игрока...';
-            statusEl.style.color = '#ffaa33';
-        } else if (allReady) {
-            statusEl.innerText = '✅ Все готовы! Игра начинается...';
-            statusEl.style.color = '#66ff66';
-            if (isHost && data.status !== 'playing') {
-                setTimeout(() => {
-                    gamesRef.child(currentRoomId).update({ status: 'playing' });
-                }, 2000);
-            }
-        } else {
-            statusEl.innerText = '🔄 Ожидание готовности...';
-            statusEl.style.color = '#ffaa33';
-        }
-        const readyBtn = document.getElementById('readyBtn');
-        if (data.status === 'playing') {
-            readyBtn.style.display = 'none';
-        } else if (players[currentUser]) {
-            readyBtn.style.display = 'block';
-            readyBtn.innerText = players[currentUser].ready ? '✅ ГОТОВ' : 'ГОТОВ';
-            readyBtn.disabled = players[currentUser].ready;
-        } else {
-            readyBtn.style.display = 'none';
-        }
-    }
-
-    document.getElementById('readyBtn').onclick = function() {
-        if (!currentRoomId || !currentUser) return;
-        gamesRef.child(currentRoomId).child(`players/${currentUser}/ready`).set(true);
-    };
-
-    document.getElementById('leaveLobbyBtn').onclick = function() {
-        leaveLobby();
-    };
-
-    function leaveLobby() {
-        mpInitDone = false;
-        if (gameListenerRef) { gameListenerRef.off(); gameListenerRef = null; }
-        if (currentRoomId) {
-            if (isHost) {
-                gamesRef.child(currentRoomId).remove().catch(()=>{});
-            } else {
-                gamesRef.child(currentRoomId).child(`players/${currentUser}`).remove().catch(()=>{});
-            }
-            currentRoomId = null;
-            isHost = false;
-        }
-        document.getElementById('lobbyScreen').style.display = 'none';
-        document.getElementById('menuScreen').style.display = 'flex';
-        document.getElementById('multiplayerControls').style.display = 'none';
-        document.getElementById('roomDisplay').innerHTML = '';
-    }
-
-    function startMultiplayerGame(roomId, data) {
-        // Аналогично одиночной, но с мультиплеерной синхронизацией
-        // Для краткости здесь я не буду повторять полный код мультиплеера,
-        // но он должен быть таким же, как в предыдущей версии.
-        // Поскольку основная задача — добавить выбор городов в одиночную игру,
-        // я сосредоточусь на одиночном режиме.
-        alert("Мультиплеер запущен (заглушка)");
-    }
-
-    // =================================================================
-    // 7. ИГРОВОЙ ДВИЖОК (ОДИНОЧНЫЙ РЕЖИМ С ВЫБОРОМ ГОРОДОВ)
-    // =================================================================
+    // ---- Глобальные переменные ----
     let map, gameActive = false;
     let resources = 300;
     let buildings = [], zones = [], projectiles = [];
     let radars = [], pvoSystems = [], powerPlants = [], refineries = [], rocketFactories = [];
     let buildMode = null;
-    let airportMarker = null, enemyAirportMarker = null;
+    let airportMarker = null;
     let airportPlaced = false;
     let lastUpdate = 0;
-    let myTeam = null, enemyTeam = null;
-    let isAI = false;
+    let myTeam = 'russia', enemyTeam = 'ukraine';
+    let isAI = true;
     let isSandbox = false;
-    // Переменная для выбранных городов (будет установлена из модального окна)
-    let selectedCities = [];
     let difficulty = "NORMAL";
     let russiaGeoJSON = null, ukraineGeoJSON = null, bordersLoaded = false;
     let radarAnimationInterval = null, aiInterval = null, economyInterval = null;
-    let peer = null, conn = null, isHostPeer = false, lobbyState = { player1: { ready: false, team: null }, player2: { ready: false, team: null } };
-    let roomId = null;
     let currentAirport = null;
     let attackType = 'drone', attackCount = 1;
+    let playerXP = 0;
+    let playerStats = { wins:0, losses:0, citiesDestroyed:0, buildingsDestroyed:0, missilesLaunched:0, hits:0, totalShots:0 };
+    const ranks = [
+        { level:1, xp:0, title:"Рядовой" }, { level:2, xp:500, title:"Сержант" }, { level:3, xp:1200, title:"Лейтенант" },
+        { level:4, xp:2500, title:"Капитан" }, { level:5, xp:5000, title:"Майор" }, { level:6, xp:9000, title:"Полковник" },
+        { level:7, xp:15000, title:"Генерал" }
+    ];
+    let audioCtx = null;
 
     // ---- Fallback границы ----
     const fallbackRussia = {
@@ -765,40 +302,7 @@
         }]
     };
 
-    const weaponTypes = {
-        drone: { name: 'SHAHED', speed: 0.006, damage: 25, cost: 60, pvoChance: 0.08, spriteOffset: 0, img: 'drone.png' },
-        cruise: { name: 'CRUISE', speed: 0.02, damage: 35, cost: 90, pvoChance: 0.10, spriteOffset: 90, img: 'cruise.png' },
-        ballistic: { name: 'BALLISTIC', speed: 0.05, damage: 50, cost: 130, pvoChance: 0.10, spriteOffset: -45, img: 'ballistic.png' },
-        hypersonic: { name: 'HYPERSONIC', speed: 0.09, damage: 70, cost: 200, pvoChance: 0.10, spriteOffset: 0, img: 'hypersonic.png' },
-        x101: { name: 'X-101', speed: 0.03, damage: 65, cost: 160, pvoChance: 0.12, spriteOffset: 0, img: 'x101.png' },
-        kalibr: { name: 'KALIBR', speed: 0.025, damage: 200, cost: 750, pvoChance: 0.08, spriteOffset: 0, img: 'kalibr.png' },
-        kinzhal: { name: 'KINZHAL', speed: 0.11, damage: 250, cost: 850, pvoChance: 0.05, spriteOffset: 0, img: 'kinzhal.png' },
-        iskander: { name: 'ISKANDER', speed: 0.07, damage: 300, cost: 1000, pvoChance: 0.04, spriteOffset: 0, img: 'iskander.png' }
-    };
-    const costs = { radar: 180, pvo: 220, powerPlant: 250, refinery: 400, rocketFactory: 500 };
-    let maxRadars = 8, maxPvo = 12, maxPowerPlants = 5, maxRefineries = 3;
-
-    let playerXP = 0;
-    let playerStats = { wins:0, losses:0, citiesDestroyed:0, buildingsDestroyed:0, missilesLaunched:0, hits:0, totalShots:0 };
-    const ranks = [
-        { level:1, xp:0, title:"Рядовой" }, { level:2, xp:500, title:"Сержант" }, { level:3, xp:1200, title:"Лейтенант" },
-        { level:4, xp:2500, title:"Капитан" }, { level:5, xp:5000, title:"Майор" }, { level:6, xp:9000, title:"Полковник" },
-        { level:7, xp:15000, title:"Генерал" }
-    ];
-    let audioCtx = null;
-    function playBeep(freq, duration, type='sine') {
-        if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const now = audioCtx.currentTime;
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.frequency.value = freq; osc.type = type;
-        gain.gain.setValueAtTime(0.15, now);
-        gain.gain.exponentialRampToValueAtTime(0.00001, now + duration);
-        osc.start(); osc.stop(now + duration);
-    }
-
-    // Полный список всех городов (полные данные)
+    // ---- Данные всех городов ----
     const allZoneData = [
         { name: 'КИЕВ', center: [50.4501,30.5234], team: 'ukraine', hp: 400, baseHp: 400 },
         { name: 'ОДЕССА', center: [46.4825,30.7233], team: 'ukraine', hp: 320, baseHp: 320 },
@@ -812,11 +316,27 @@
         { name: 'ВОЛГОГРАД', center: [48.7047,44.5133], team: 'russia', hp: 340, baseHp: 340 },
         { name: 'КРАСНОДАР', center: [45.0355,38.9753], team: 'russia', hp: 280, baseHp: 280 }
     ];
-    // Переменная zoneData будет переопределена в initGameMapAndLogic на основе selectedCities
-    let zoneData = [];
+
+    // ---- Выбранные города (по умолчанию все) ----
+    let selectedCities = allZoneData.map(c => c.name);
 
     const teamColors = { russia: '#ff5555', ukraine: '#55aaff' };
 
+    // ---- Типы вооружения ----
+    const weaponTypes = {
+        drone: { name: 'SHAHED', speed: 0.006, damage: 25, cost: 60, pvoChance: 0.08, spriteOffset: 0, img: 'drone.png' },
+        cruise: { name: 'CRUISE', speed: 0.02, damage: 35, cost: 90, pvoChance: 0.10, spriteOffset: 90, img: 'cruise.png' },
+        ballistic: { name: 'BALLISTIC', speed: 0.05, damage: 50, cost: 130, pvoChance: 0.10, spriteOffset: -45, img: 'ballistic.png' },
+        hypersonic: { name: 'HYPERSONIC', speed: 0.09, damage: 70, cost: 200, pvoChance: 0.10, spriteOffset: 0, img: 'hypersonic.png' },
+        x101: { name: 'X-101', speed: 0.03, damage: 65, cost: 160, pvoChance: 0.12, spriteOffset: 0, img: 'x101.png' },
+        kalibr: { name: 'KALIBR', speed: 0.025, damage: 200, cost: 750, pvoChance: 0.08, spriteOffset: 0, img: 'kalibr.png' },
+        kinzhal: { name: 'KINZHAL', speed: 0.11, damage: 250, cost: 850, pvoChance: 0.05, spriteOffset: 0, img: 'kinzhal.png' },
+        iskander: { name: 'ISKANDER', speed: 0.07, damage: 300, cost: 1000, pvoChance: 0.04, spriteOffset: 0, img: 'iskander.png' }
+    };
+    const costs = { radar: 180, pvo: 220, powerPlant: 250, refinery: 400, rocketFactory: 500 };
+    let maxRadars = 8, maxPvo = 12, maxPowerPlants = 5, maxRefineries = 3;
+
+    // ---- Иконки ----
     function getAirportIcon() { try { return L.icon({ iconUrl: 'images/airport.png', iconSize: [48,48], iconAnchor: [24,24] }); } catch(e){ return L.divIcon({ html:'🏠', iconSize:[48,48] }); } }
     function getRadarIcon() { try { return L.icon({ iconUrl: 'images/radar.png', iconSize: [40,40], iconAnchor: [20,20] }); } catch(e){ return L.divIcon({ html:'📡', iconSize:[40,40] }); } }
     function getPvoIcon() { try { return L.icon({ iconUrl: 'images/pvo.png', iconSize: [40,40], iconAnchor: [20,20] }); } catch(e){ return L.divIcon({ html:'🛡️', iconSize:[40,40] }); } }
@@ -832,6 +352,19 @@
         const map = { cruise:'images/cruise.png', ballistic:'images/ballistic.png', hypersonic:'images/hypersonic.png', x101:'images/x101.png', kalibr:'images/kalibr.png', kinzhal:'images/kinzhal.png', iskander:'images/iskander.png' };
         const url = map[type] || 'images/missile.png';
         try { return L.icon({ iconUrl: url, iconSize: [28,28], iconAnchor: [14,14] }); } catch(e){ return L.divIcon({ html: '💥', iconSize:[28,28] }); }
+    }
+
+    // ---- Звук ----
+    function playBeep(freq, duration, type='sine') {
+        if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.frequency.value = freq; osc.type = type;
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.00001, now + duration);
+        osc.start(); osc.stop(now + duration);
     }
 
     // ---- География ----
@@ -859,7 +392,7 @@
         let feat=geojson.features?geojson.features[0]:geojson;
         try { return turf.booleanPointInPolygon(point,feat); } catch(e){ return true; }
     }
-    function isOwnTerritory(lat,lng){ if(!myTeam) return false; return isInsideCountry(lat,lng,myTeam); }
+    function isOwnTerritory(lat,lng){ return isInsideCountry(lat,lng,myTeam); }
     function canBuildHere(lat,lng){ if(!isOwnTerritory(lat,lng)) return false; for(let b of buildings) if(map.distance([lat,lng],[b.lat,b.lng])<4000) return false; return true; }
     function canBuildForTeam(lat,lng,team){ if(!isInsideCountry(lat,lng,team)) return false; for(let b of buildings) if(map.distance([lat,lng],[b.lat,b.lng])<4000) return false; return true; }
 
@@ -875,31 +408,22 @@
         document.getElementById('uaFill').style.width=uaPercent+'%';
         if(ruTotal<=0 && gameActive){
             gameActive=false;
-            const victory = (myTeam==='ukraine');
-            if(victory) alert("🏆 ПОБЕДА! Вы уничтожили все города России.");
-            else alert("💀 ПОРАЖЕНИЕ! Ваши города России уничтожены.");
-            updateStatsAfterGame(victory);
-            if (isMultiplayer) updateElo(victory, 'multiplayer');
-            else if (isAI) updateElo(victory, 'single');
-            if(isMultiplayer && currentRoomId) gamesRef.child(currentRoomId).remove();
+            alert("🏆 ПОБЕДА! Вы уничтожили все города России.");
+            updateStatsAfterGame(true);
             setTimeout(()=>location.reload(),3000);
         }
         if(uaTotal<=0 && gameActive){
             gameActive=false;
-            const victory = (myTeam==='russia');
-            if(victory) alert("🏆 ПОБЕДА! Вы уничтожили все города Украины.");
-            else alert("💀 ПОРАЖЕНИЕ! Ваши города Украины уничтожены.");
-            updateStatsAfterGame(victory);
-            if (isMultiplayer) updateElo(victory, 'multiplayer');
-            else if (isAI) updateElo(victory, 'single');
-            if(isMultiplayer && currentRoomId) gamesRef.child(currentRoomId).remove();
+            alert("🏆 ПОБЕДА! Вы уничтожили все города Украины.");
+            updateStatsAfterGame(true);
             setTimeout(()=>location.reload(),3000);
         }
     }
 
     function initZones(){
         zones=[];
-        zoneData.forEach(z=>{
+        const filteredZoneData = allZoneData.filter(z => selectedCities.includes(z.name));
+        filteredZoneData.forEach(z=>{
             let circle=L.circle(z.center,{radius:15000,color:z.team==='russia'?teamColors.russia:teamColors.ukraine,weight:2,fillOpacity:0.25}).addTo(map);
             let marker=L.marker(z.center,{icon:L.divIcon({html:`<div class="zone-marker" style="border-color: ${z.team==='russia'?'#ff8888':'#88aaff'};">${z.name}<br>${Math.floor((z.hp/z.baseHp)*100)}%</div>`,iconSize:[80,40]})}).addTo(map);
             zones.push({id:z.name,name:z.name,center:z.center,team:z.team,hp:z.hp,baseHp:z.baseHp,circle:circle,marker:marker});
@@ -980,7 +504,6 @@
         if(type==='refinery') refineries.push(building);
         if(type==='rocketFactory') rocketFactories.push(building);
         updateUI();
-        if(isMultiplayer) sendMpAction({ type:'build', building });
         return true;
     }
 
@@ -1030,7 +553,6 @@
             projectiles.push(proj);
         }
         updateUI(); playBeep(800,0.2);
-        if(isMultiplayer) sendMpAction({ type:'launch', targetId:targetObj.id, targetType:targetObj.type, weaponType:type, count, from: fromLatLng, to: targetObj });
         return true;
     }
 
@@ -1046,7 +568,6 @@
                     if(Math.random() < chance){
                         playBeep(600,0.15);
                         launchInterceptor({lat:pvo.lat,lng:pvo.lng}, pos);
-                        if(isMultiplayer) sendMpAction({ type:'intercept', projectileId:proj.id });
                         return true;
                     }
                 }
@@ -1079,14 +600,12 @@
                         targetZone.hp = Math.max(0, targetZone.hp - p.damage);
                         updateZoneMarkers(); playBeep(200,0.4); addXP(20);
                         if (targetZone.hp <= 0) { removeZoneIfDestroyed(targetZone); addXP(100); }
-                        if(isMultiplayer) sendMpAction({ type:'damageZone', zoneId:p.targetId, newHp:targetZone.hp });
                     }
                 } else if(p.targetType === 'building'){
                     let targetBuilding = buildings.find(b => b.id == p.targetId);
                     if(targetBuilding && targetBuilding.hp > 0){
                         targetBuilding.hp -= p.damage; playBeep(200,0.4); addXP(20);
                         if(targetBuilding.hp <= 0) destroyBuilding(targetBuilding);
-                        if(isMultiplayer) sendMpAction({ type:'damageBuilding', buildingId:p.targetId, newHp:targetBuilding.hp });
                     }
                 }
                 updateStatsAfterHit(p.damage, p.targetType, true);
@@ -1275,22 +794,8 @@
         document.getElementById('attackModal').style.display = 'block';
     }
 
-    // ---- Инициализация одиночной игры с выбранными городами ----
+    // ---- Инициализация игры ----
     function initGameMapAndLogic(){
-        // Устанавливаем zoneData из выбранных городов (или все, если ничего не выбрано)
-        if (selectedCities && selectedCities.length > 0) {
-            // Фильтруем города только выбранные
-            zoneData = allZoneData.filter(city => selectedCities.includes(city.name));
-        } else {
-            // Если ничего не выбрано, берём все города
-            zoneData = allZoneData.slice();
-        }
-        // Проверка: если нет городов, берём все
-        if (zoneData.length === 0) {
-            zoneData = allZoneData.slice();
-            console.warn("Не выбрано ни одного города, используются все");
-        }
-
         document.getElementById('menuScreen').style.display='none';
         document.getElementById('lobbyScreen').style.display='none';
         document.getElementById('gameContainer').style.display='block';
@@ -1337,160 +842,150 @@
     }
 
     // =================================================================
-    // 8. МОДАЛЬНОЕ ОКНО ВЫБОРА ГОРОДОВ И СЛОЖНОСТИ
+    // МЕНЮ ВЫБОРА ГОРОДОВ И СЛОЖНОСТИ
     // =================================================================
-    function openCitySelectModal() {
-        const modal = document.getElementById('citySelectModal');
-        modal.style.display = 'block';
-        // Заполняем сетку городов
-        const grid = document.getElementById('cityGrid');
-        grid.innerHTML = '';
-        // Группируем по странам
-        const russiaCities = allZoneData.filter(c => c.team === 'russia');
-        const ukraineCities = allZoneData.filter(c => c.team === 'ukraine');
-        // Добавляем секции
-        const addSection = (title, cities) => {
-            const sectionDiv = document.createElement('div');
-            sectionDiv.className = 'city-section';
-            sectionDiv.textContent = title;
-            grid.appendChild(sectionDiv);
-            cities.forEach(city => {
-                const label = document.createElement('label');
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.value = city.name;
-                checkbox.checked = true; // по умолчанию все выбраны
-                label.appendChild(checkbox);
-                label.appendChild(document.createTextNode(` ${city.name}`));
-                grid.appendChild(label);
-            });
-        };
-        addSection('🇷🇺 Россия', russiaCities);
-        addSection('🇺🇦 Украина', ukraineCities);
+    const citySelectModal = document.getElementById('citySelectModal');
+    const cityList = document.getElementById('cityList');
+    const startGameBtn = document.getElementById('startGameBtn');
+    const closeCityBtn = document.getElementById('closeCityModal');
 
-        // Устанавливаем текущую сложность из глобальной переменной difficulty
-        const diffButtons = document.querySelectorAll('#cityDiffButtons .diff-btn');
-        diffButtons.forEach(btn => {
-            btn.classList.remove('selected');
-            if (btn.dataset.diff === difficulty) {
-                btn.classList.add('selected');
-            }
-        });
-        // Обработчики для кнопок сложности в модальном окне
-        diffButtons.forEach(btn => {
-            btn.onclick = function(e) {
-                diffButtons.forEach(b => b.classList.remove('selected'));
-                this.classList.add('selected');
-                // Обновляем глобальную переменную difficulty
-                difficulty = this.dataset.diff;
-                // Также синхронизируем выбор в главном меню (для сохранения)
-                document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('selected'));
-                const mainDiffMap = {
-                    'EASY': 'diffEasy',
-                    'NORMAL': 'diffNormal',
-                    'HARD': 'diffHard',
-                    'EXTREME': 'diffExtreme'
-                };
-                if (mainDiffMap[difficulty]) {
-                    document.getElementById(mainDiffMap[difficulty]).classList.add('selected');
+    // Заполняем список городов
+    function renderCityList() {
+        cityList.innerHTML = '';
+        allZoneData.forEach(city => {
+            const div = document.createElement('div');
+            div.className = 'city-item';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = 'city_' + city.name;
+            checkbox.checked = selectedCities.includes(city.name);
+            const label = document.createElement('label');
+            label.htmlFor = 'city_' + city.name;
+            label.textContent = city.name;
+            const badge = document.createElement('span');
+            badge.className = 'country-badge';
+            badge.textContent = city.team === 'russia' ? '🇷🇺' : '🇺🇦';
+            div.appendChild(checkbox);
+            div.appendChild(label);
+            div.appendChild(badge);
+            checkbox.addEventListener('change', () => {
+                if(checkbox.checked) {
+                    if(!selectedCities.includes(city.name)) selectedCities.push(city.name);
+                } else {
+                    selectedCities = selectedCities.filter(c => c !== city.name);
                 }
-            };
+            });
+            cityList.appendChild(div);
         });
     }
 
-    // Кнопка "Одиночная игра" теперь открывает модальное окно
-    document.getElementById('singleBtn').onclick = function() {
-        if (!currentUser) { alert("Сначала войдите в аккаунт!"); return; }
-        openCitySelectModal();
-    };
+    // Обработчики для кнопок "Выбрать все" / "Снять все"
+    document.getElementById('selectAllCities').addEventListener('click', () => {
+        selectedCities = allZoneData.map(c => c.name);
+        renderCityList();
+        document.querySelectorAll('#cityList input[type="checkbox"]').forEach(cb => cb.checked = true);
+    });
+    document.getElementById('deselectAllCities').addEventListener('click', () => {
+        selectedCities = [];
+        renderCityList();
+        document.querySelectorAll('#cityList input[type="checkbox"]').forEach(cb => cb.checked = false);
+    });
 
-    // Кнопка "Начать игру" в модальном окне
-    document.getElementById('startGameBtn').onclick = function() {
-        // Собираем выбранные города
-        const checkboxes = document.querySelectorAll('#cityGrid input[type="checkbox"]');
-        const selected = [];
-        checkboxes.forEach(cb => {
-            if (cb.checked) selected.push(cb.value);
+    // Выбор сложности в модалке
+    let selectedDifficulty = 'NORMAL';
+    document.querySelectorAll('#cityDifficultySelect .diff-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('#cityDifficultySelect .diff-btn').forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedDifficulty = this.dataset.diff;
         });
-        if (selected.length < 2) {
-            alert("Выберите хотя бы 2 города!");
+    });
+
+    // Открытие модалки при нажатии "Одиночная игра"
+    document.getElementById('singleBtn').addEventListener('click', function() {
+        // Если уже есть игра, перезагружаем настройки
+        if (gameActive) { location.reload(); return; }
+        // Сбрасываем выбор городов на все
+        selectedCities = allZoneData.map(c => c.name);
+        renderCityList();
+        document.querySelectorAll('#cityList input[type="checkbox"]').forEach(cb => cb.checked = true);
+        // Сложность по умолчанию NORMAL
+        document.querySelectorAll('#cityDifficultySelect .diff-btn').forEach(b => b.classList.remove('selected'));
+        document.querySelector('#cityDifficultySelect .diff-btn[data-diff="NORMAL"]').classList.add('selected');
+        selectedDifficulty = 'NORMAL';
+        citySelectModal.style.display = 'block';
+        document.getElementById('menuScreen').style.display = 'none';
+    });
+
+    // Закрытие модалки
+    closeCityBtn.addEventListener('click', function() {
+        citySelectModal.style.display = 'none';
+        document.getElementById('menuScreen').style.display = 'flex';
+    });
+
+    // Начать игру
+    startGameBtn.addEventListener('click', function() {
+        // Проверяем, что выбрано хотя бы 2 города
+        if(selectedCities.length < 2) {
+            alert('Выберите хотя бы 2 города!');
             return;
         }
-        // Проверяем, что есть хотя бы один город из каждой страны
-        const hasRussia = selected.some(name => allZoneData.find(c => c.name === name && c.team === 'russia'));
-        const hasUkraine = selected.some(name => allZoneData.find(c => c.name === name && c.team === 'ukraine'));
-        if (!hasRussia || !hasUkraine) {
-            alert("Выберите хотя бы один город из России и один из Украины!");
+        // Проверяем, есть ли города обеих стран
+        const hasRussia = allZoneData.some(c => c.team === 'russia' && selectedCities.includes(c.name));
+        const hasUkraine = allZoneData.some(c => c.team === 'ukraine' && selectedCities.includes(c.name));
+        if(!hasRussia || !hasUkraine) {
+            alert('Должны быть выбраны города как России, так и Украины!');
             return;
         }
-        // Закрываем модальное окно
-        document.getElementById('citySelectModal').style.display = 'none';
-        // Сохраняем выбранные города и сложность в глобальные переменные
-        selectedCities = selected;
-        window._selectedDifficulty = difficulty; // для Эло
-        // Запускаем одиночную игру
+        difficulty = selectedDifficulty;
         isAI = true;
         isSandbox = false;
-        isMultiplayer = false;
         myTeam = 'russia';
         enemyTeam = 'ukraine';
+        citySelectModal.style.display = 'none';
+        // Запускаем игру
         initGameMapAndLogic();
-    };
-
-    document.getElementById('closeCitySelectBtn').onclick = function() {
-        document.getElementById('citySelectModal').style.display = 'none';
-    };
+    });
 
     // =================================================================
-    // 9. ОБРАБОТЧИКИ КНОПОК МЕНЮ
+    // ОСТАЛЬНЫЕ КНОПКИ МЕНЮ
     // =================================================================
-    document.getElementById('sandboxBtn').onclick = function() {
-        if (!currentUser) { alert("Сначала войдите в аккаунт!"); return; }
-        // Песочница использует все города и бесконечные ресурсы
+    // Песочница (сразу запускаем без выбора городов, используем все)
+    document.getElementById('sandboxBtn').addEventListener('click', function() {
+        // Сброс
+        if(gameActive) location.reload();
         selectedCities = allZoneData.map(c => c.name);
-        difficulty = "NORMAL"; // можно установить любую
-        isAI = true; // ИИ активен
+        difficulty = "NORMAL";
+        isAI = true;
         isSandbox = true;
-        isMultiplayer = false;
         myTeam = 'russia';
         enemyTeam = 'ukraine';
-        zoneData = allZoneData.slice(); // все города
+        // Сразу запускаем игру
         initGameMapAndLogic();
-    };
+    });
 
-    document.getElementById('tutorialBtn').onclick = function() {
-        alert("Обучение: постройте аэродром → радар → ПВО → атакуйте врага. В песочнице нет лимитов и бесконечная энергия. В мультиплеере играйте вдвоём.");
-    };
+    // Мультиплеер (заглушка)
+    document.getElementById('multiplayerBtn').addEventListener('click', function() {
+        const controls = document.getElementById('multiplayerControls');
+        controls.style.display = controls.style.display === 'none' ? 'block' : 'none';
+    });
 
-    document.getElementById('logoutBtn').onclick = logout;
+    document.getElementById('createRoomBtn').addEventListener('click', function() {
+        alert('Мультиплеер в разработке');
+    });
+    document.getElementById('joinRoomBtn').addEventListener('click', function() {
+        const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+        if(code) alert('Мультиплеер в разработке');
+        else alert('Введите код комнаты');
+    });
 
-    // ---- Выбор сложности в главном меню (синхронизация) ----
-    document.getElementById('diffEasy').onclick = function() {
-        document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('selected'));
-        this.classList.add('selected');
-        difficulty = "EASY";
-        window._selectedDifficulty = "EASY";
-    };
-    document.getElementById('diffNormal').onclick = function() {
-        document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('selected'));
-        this.classList.add('selected');
-        difficulty = "NORMAL";
-        window._selectedDifficulty = "NORMAL";
-    };
-    document.getElementById('diffHard').onclick = function() {
-        document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('selected'));
-        this.classList.add('selected');
-        difficulty = "HARD";
-        window._selectedDifficulty = "HARD";
-    };
-    document.getElementById('diffExtreme').onclick = function() {
-        document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('selected'));
-        this.classList.add('selected');
-        difficulty = "EXTREME";
-        window._selectedDifficulty = "EXTREME";
-    };
+    document.getElementById('tutorialBtn').addEventListener('click', function() {
+        alert('Обучение: постройте аэродром → радар → ПВО → атакуйте врага. Выбирайте города перед игрой.');
+    });
 
-    // ---- Панель построек ----
+    // =================================================================
+    // ПАНЕЛЬ ПОСТРОЕК (кнопка всегда видна)
+    // =================================================================
     const buildToggle = document.getElementById('buildToggle');
     const buildMenu = document.getElementById('buildMenu');
     let buildMenuOpen = false;
@@ -1510,18 +1005,28 @@
         });
     });
 
-    document.getElementById('buildRadarBtn').onclick = () => { buildMode = 'radar'; };
-    document.getElementById('buildPvoBtn').onclick = () => { buildMode = 'pvo'; };
-    document.getElementById('buildPowerPlantBtn').onclick = () => { buildMode = 'powerPlant'; };
-    document.getElementById('buildRefineryBtn').onclick = () => { buildMode = 'refinery'; };
-    document.getElementById('buildRocketFactoryBtn').onclick = () => { buildMode = 'rocketFactory'; };
-    document.getElementById('cancelBuild').onclick = () => { buildMode = null; };
+    document.getElementById('buildRadarBtn').addEventListener('click', () => { buildMode = 'radar'; });
+    document.getElementById('buildPvoBtn').addEventListener('click', () => { buildMode = 'pvo'; });
+    document.getElementById('buildPowerPlantBtn').addEventListener('click', () => { buildMode = 'powerPlant'; });
+    document.getElementById('buildRefineryBtn').addEventListener('click', () => { buildMode = 'refinery'; });
+    document.getElementById('buildRocketFactoryBtn').addEventListener('click', () => { buildMode = 'rocketFactory'; });
+    document.getElementById('cancelBuild').addEventListener('click', () => { buildMode = null; });
 
-    // ---- Счетчики модалки атаки ----
-    document.getElementById('countMinus').onclick = () => { if (attackCount > 1) attackCount--; document.getElementById('countValue').innerText = attackCount; updateCostDisplay(); };
-    document.getElementById('countPlus').onclick = () => { if (attackCount < 5) attackCount++; document.getElementById('countValue').innerText = attackCount; updateCostDisplay(); };
-    document.getElementById('attackCancelBtn').onclick = closeAttackModal;
-    document.getElementById('attackConfirmBtn').onclick = function() {
+    // =================================================================
+    // СЧЁТЧИКИ И КНОПКИ МОДАЛКИ АТАКИ
+    // =================================================================
+    document.getElementById('countMinus').addEventListener('click', function() {
+        if (attackCount > 1) attackCount--;
+        document.getElementById('countValue').innerText = attackCount;
+        updateCostDisplay();
+    });
+    document.getElementById('countPlus').addEventListener('click', function() {
+        if (attackCount < 5) attackCount++;
+        document.getElementById('countValue').innerText = attackCount;
+        updateCostDisplay();
+    });
+    document.getElementById('attackCancelBtn').addEventListener('click', closeAttackModal);
+    document.getElementById('attackConfirmBtn').addEventListener('click', function() {
         let select = document.getElementById('targetSelect');
         let targetId = select.value;
         let targetType = select.options[select.selectedIndex].getAttribute('data-type');
@@ -1537,12 +1042,12 @@
         }
         if (currentAirport) launchAttack(currentAirport, target, attackType, attackCount);
         closeAttackModal();
-    };
+    });
 
     // =================================================================
-    // 10. ЗАГРУЗКА
+    // ЗАПУСК ПРИ ЗАГРУЗКЕ
     // =================================================================
-    console.log("✅ Игра полностью загружена. Выбирайте города и сложность!");
+    console.log("✅ Игра загружена. Нажмите «Одиночная игра» для выбора городов.");
 </script>
 </body>
 </html>
