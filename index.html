@@ -13,7 +13,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
-        /* ====== БАЗОВЫЕ СТИЛИ ====== */
         *{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent}
         body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0f12;overflow:hidden;height:100vh;color:#eef;touch-action:manipulation}
         .screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;justify-content:center;align-items:center;z-index:2000;background:radial-gradient(circle at 20% 30%,#0a1f1a,#030a08)}
@@ -99,8 +98,6 @@
         @media (min-width:601px) and (max-width:900px){#gameHUD{padding:4px 12px;font-size:.8rem}.bar-bg{width:80px;height:7px}.modal{width:80vw;padding:20px}.card,.auth-card{padding:30px 24px}.logo{font-size:2.5rem}}
         @media (max-width:800px) and (orientation:landscape){#gameHUD{flex-direction:row;flex-wrap:wrap;font-size:.6rem;padding:2px 8px;min-height:30px}.hud-resource,.hud-rank{font-size:.7rem;padding:2px 6px}.bar-bg{width:40px;height:4px}#buildToggle{padding:6px 12px;font-size:.8rem;min-height:30px}#buildMenu .build-btn{font-size:.7rem;padding:4px 10px}.modal{width:70vw;max-height:80vh;padding:12px}.modal .weapon-grid{max-height:150px}.modal .weapon-card img{height:30px}}
         @media (max-width:400px){.card,.auth-card{padding:12px 10px;border-radius:24px}.logo{font-size:1.6rem}.card button,.auth-card button{font-size:.8rem;padding:8px;margin:4px 0}.card input,.auth-card input{font-size:.8rem;padding:8px}.bar-bg{width:35px;height:4px}.modal{padding:10px;width:98vw}.modal h3{font-size:1rem}.modal .weapon-card{padding:4px}.modal .weapon-card img{height:30px}}
-
-        /* ===== СТИЛИ ДЛЯ МЕНЮ НАСТРОЙКИ ===== */
         #setupModal {
             position: fixed;
             top: 50%;
@@ -188,7 +185,6 @@
             border-color: gold;
             color: #1a2a2a;
         }
-        /* Стили для выбора страны */
         #setupModal .country-select-modal {
             display: flex;
             gap: 12px;
@@ -247,7 +243,6 @@
 </head>
 <body>
 
-<!-- Оверлей авторизации -->
 <div id="authOverlay" class="auth-overlay">
     <div class="auth-card">
         <h2 id="authTitle">ВХОД</h2>
@@ -262,7 +257,6 @@
     </div>
 </div>
 
-<!-- Главное меню -->
 <div id="menuScreen" class="screen">
     <div class="missile-bg"></div>
     <div class="scan-line"></div>
@@ -285,7 +279,6 @@
     </div>
 </div>
 
-<!-- Лобби -->
 <div id="lobbyScreen" class="screen" style="display:none;">
     <div class="card" style="width:400px; max-width:92%;">
         <h1>ЛОББИ</h1>
@@ -298,7 +291,6 @@
     </div>
 </div>
 
-<!-- Модалка рейтинга -->
 <div id="rankModal" class="ranking-modal" style="display:none;">
     <span class="close-btn" id="closeRankModal">&times;</span>
     <h2>🏆 ТОП ИГРОКОВ</h2>
@@ -307,26 +299,19 @@
     </ul>
 </div>
 
-<!-- НОВОЕ МЕНЮ НАСТРОЙКИ С ВЫБОРОМ СТРАНЫ -->
 <div id="setupModal">
     <span class="close-setup" id="closeSetupModal">&times;</span>
     <h2>⚙️ НАСТРОЙКА ИГРЫ</h2>
-    
-    <!-- ВЫБОР СТРАНЫ -->
     <div class="country-select-modal">
         <div class="country-btn-modal selected" data-country="russia">🇷🇺 РОССИЯ</div>
         <div class="country-btn-modal" data-country="ukraine">🇺🇦 УКРАИНА</div>
     </div>
-
-    <!-- ВЫБОР СЛОЖНОСТИ -->
     <div class="difficulty-select-modal">
         <div class="difficulty-btn-modal" data-diff="EASY">EASY</div>
         <div class="difficulty-btn-modal selected" data-diff="NORMAL">NORMAL</div>
         <div class="difficulty-btn-modal" data-diff="HARD">HARD</div>
         <div class="difficulty-btn-modal" data-diff="EXTREME">EXTREME</div>
     </div>
-
-    <!-- СПИСКИ ГОРОДОВ -->
     <div class="setup-grid">
         <div class="setup-col">
             <h3>🇷🇺 РОССИЯ</h3>
@@ -340,7 +325,6 @@
     <button class="start-btn" id="startGameBtn">🚀 НАЧАТЬ ИГРУ</button>
 </div>
 
-<!-- Модалка атаки -->
 <div id="attackModal" class="modal" style="display:none;">
     <h3>🎯 ВЫБОР ЦЕЛИ</h3>
     <select id="targetSelect" size="5" style="width:100%; margin-bottom:10px;"></select>
@@ -352,7 +336,6 @@
     <button id="attackCancelBtn" style="background:#555; color:#fff;">ОТМЕНА</button>
 </div>
 
-<!-- Контейнер игры -->
 <div id="gameContainer" style="display:none; width:100%; height:100%; position:relative;">
     <div id="map" style="width:100%; height:100%;"></div>
     <div id="gameHUD">
@@ -853,7 +836,7 @@
     }
 
     // =================================================================
-    // 8. ИГРОВОЙ ДВИЖОК (одиночный и мультиплеер)
+    // 8. ИГРОВОЙ ДВИЖОК
     // =================================================================
     let map, gameActive = false;
     let resources = 300;
@@ -868,15 +851,11 @@
     let isSandbox = false;
     let russiaGeoJSON = null, ukraineGeoJSON = null, bordersLoaded = false;
     let radarAnimationInterval = null, aiInterval = null, economyInterval = null;
-    let peer = null, conn = null, isHostPeer = false, lobbyState = { player1: { ready: false, team: null }, player2: { ready: false, team: null } };
-    let roomId = null;
-    let currentAirport = null;
     let attackType = 'drone', attackCount = 1;
     let maxRadars = 8, maxPvo = 12, maxPowerPlants = 5, maxRefineries = 3;
 
-    // ---- БАЗОВЫЙ СПИСОК ВСЕХ ГОРОДОВ (без HP, HP будет пересчитан) ----
+    // ---- БАЗОВЫЙ СПИСОК ВСЕХ ГОРОДОВ ----
     const allCities = [
-        // Россия (сортировка по долготе от западной к восточной)
         { name: 'БРЯНСК', center: [53.2433, 34.3637], team: 'russia' },
         { name: 'СМОЛЕНСК', center: [54.7826, 32.0453], team: 'russia' },
         { name: 'БЕЛГОРОД', center: [50.5975, 36.5858], team: 'russia' },
@@ -892,7 +871,6 @@
         { name: 'ПЕРМЬ', center: [58.0104, 56.2294], team: 'russia' },
         { name: 'ЧЕЛЯБИНСК', center: [55.1644, 61.4368], team: 'russia' },
         { name: 'ЧЕБОКСАРЫ (ЧУВАШИЯ)', center: [56.1432, 47.2489], team: 'russia' },
-        // Украина (сортировка по долготе от восточной к западной)
         { name: 'ХАРЬКОВ', center: [49.9935, 36.2304], team: 'ukraine' },
         { name: 'ДНЕПР', center: [48.4647, 35.0467], team: 'ukraine' },
         { name: 'ЗАПОРОЖЬЕ', center: [47.8388, 35.1396], team: 'ukraine' },
@@ -910,13 +888,11 @@
         { name: 'ЛЬВОВ', center: [49.8397, 24.0297], team: 'ukraine' }
     ];
 
-    // ---- ПЕРЕМЕННЫЕ ДЛЯ НАСТРОЕК ИЗ МОДАЛКИ ----
     let setupDifficulty = 'NORMAL';
-    let setupMode = 'single'; // 'single' или 'sandbox'
+    let setupMode = 'single';
     let selectedCityNames = [];
-    let selectedCountry = 'russia'; // 'russia' или 'ukraine'
+    let selectedCountry = 'russia';
 
-    // ---- ФУНКЦИЯ ПЕРЕСЧЁТА HP И СОРТИРОВКИ ----
     function prepareCities(selectedNames) {
         let filtered = allCities.filter(c => selectedNames.includes(c.name));
         let russia = filtered.filter(c => c.team === 'russia').sort((a,b) => a.center[1] - b.center[1]);
@@ -935,7 +911,6 @@
         return [...russia, ...ukraine];
     }
 
-    // ---- ЗАПОЛНЕНИЕ СПИСКОВ В МОДАЛКЕ ----
     function populateCityLists() {
         const russiaList = document.getElementById('russiaCityList');
         const ukraineList = document.getElementById('ukraineCityList');
@@ -965,23 +940,19 @@
         });
     }
 
-    // ---- ПОКАЗ МОДАЛКИ ----
     function showSetupModal(mode) {
         setupMode = mode;
         const modal = document.getElementById('setupModal');
         populateCityLists();
-        // Обновить выбор страны
         document.querySelectorAll('.country-btn-modal').forEach(btn => {
             btn.classList.toggle('selected', btn.dataset.country === selectedCountry);
         });
-        // Обновить выбор сложности
         document.querySelectorAll('.difficulty-btn-modal').forEach(btn => {
             btn.classList.toggle('selected', btn.dataset.diff === setupDifficulty);
         });
         modal.style.display = 'block';
     }
 
-    // ---- ОБРАБОТЧИКИ В МОДАЛКЕ ----
     document.querySelectorAll('.country-btn-modal').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelectorAll('.country-btn-modal').forEach(b => b.classList.remove('selected'));
@@ -1018,20 +989,41 @@
             return;
         }
         const preparedCities = prepareCities(selectedCityNames);
-        if (setupMode === 'sandbox') {
-            isSandbox = true;
-        } else {
-            isSandbox = false;
-        }
+        isSandbox = (setupMode === 'sandbox');
         isAI = true;
         isMultiplayer = false;
-        // Устанавливаем сторону игрока на основе выбора
         myTeam = selectedCountry;
         enemyTeam = (myTeam === 'russia') ? 'ukraine' : 'russia';
         initGameMapAndLogic(preparedCities);
     };
 
-    // ---- ИНИЦИАЛИЗАЦИЯ ИГРЫ С ПЕРЕДАННЫМ МАССИВОМ ГОРОДОВ ----
+    // ---- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ ИКОНОК ----
+    function getMissileImage(type, team) {
+        if (type === 'drone') {
+            return (team === 'ukraine') ? 'images/drone_ua.png' : 'images/drone.png';
+        }
+        const map = {
+            cruise: 'images/cruise.png',
+            ballistic: 'images/ballistic.png',
+            hypersonic: 'images/hypersonic.png',
+            x101: 'images/x101.png',
+            kalibr: 'images/kalibr.png',
+            kinzhal: 'images/kinzhal.png',
+            iskander: 'images/iskander.png'
+        };
+        return map[type] || 'images/missile.png';
+    }
+
+    function getMissileIcon(type, team) {
+        const url = getMissileImage(type, team);
+        try {
+            return L.icon({ iconUrl: url, iconSize: [28,28], iconAnchor: [14,14] });
+        } catch(e) {
+            return L.divIcon({ html: '💥', iconSize:[28,28] });
+        }
+    }
+
+    // ---- ИНИЦИАЛИЗАЦИЯ ИГРЫ ----
     function initGameMapAndLogic(citiesArray) {
         document.getElementById('menuScreen').style.display = 'none';
         document.getElementById('lobbyScreen').style.display = 'none';
@@ -1059,7 +1051,6 @@
             map.on('click', (e) => {
                 if(!airportPlaced){
                     let lat = e.latlng.lat, lng = e.latlng.lng;
-                    // Проверяем, что строим на своей территории
                     if(!isOwnTerritory(lat,lng)){ alert("Аэродром можно поставить только на своей территории!"); return; }
                     let icon = getAirportIcon();
                     airportMarker = L.marker([lat,lng], {icon}).addTo(map);
@@ -1075,7 +1066,6 @@
                     return;
                 }
                 if(buildMode){ 
-                    // Проверка территории при строительстве других зданий
                     if(!isOwnTerritory(e.latlng.lat, e.latlng.lng)){
                         alert("Можно строить только на своей территории!");
                         return;
@@ -1087,11 +1077,10 @@
         });
     }
 
-    // ---- initZones (принимает массив) ----
     function initZones(cities) {
         zones = [];
         cities.forEach(z => {
-            let circle = L.circle(z.center, { radius: 15000, color: z.team === 'russia' ? teamColors.russia : teamColors.ukraine, weight: 2, fillOpacity: 0.25 }).addTo(map);
+            let circle = L.circle(z.center, { radius: 15000, color: z.team === 'russia' ? '#ff5555' : '#55aaff', weight: 2, fillOpacity: 0.25 }).addTo(map);
             let marker = L.marker(z.center, { icon: L.divIcon({ html: `<div class="zone-marker" style="border-color: ${z.team === 'russia' ? '#ff8888' : '#88aaff'};">${z.name}<br>${Math.floor((z.hp/z.baseHp)*100)}%</div>`, iconSize: [80,40] }) }).addTo(map);
             zones.push({ id: z.name, name: z.name, center: z.center, team: z.team, hp: z.hp, baseHp: z.baseHp, circle: circle, marker: marker });
         });
@@ -1099,7 +1088,7 @@
         updateTotalPercent();
     }
 
-    // ---- ОСТАЛЬНЫЕ ФУНКЦИИ ИГРОВОГО ДВИЖКА (полный набор) ----
+    // ---- ОСТАЛЬНЫЕ ФУНКЦИИ ИГРОВОГО ДВИЖКА ----
     const weaponTypes = {
         drone: { name: 'SHAHED', speed: 0.006, damage: 25, cost: 60, pvoChance: 0.08, spriteOffset: 0, img: 'drone.png' },
         cruise: { name: 'CRUISE', speed: 0.02, damage: 35, cost: 90, pvoChance: 0.10, spriteOffset: 90, img: 'cruise.png' },
@@ -1116,7 +1105,6 @@
         { level:4, xp:2500, title:"Капитан" }, { level:5, xp:5000, title:"Майор" }, { level:6, xp:9000, title:"Полковник" },
         { level:7, xp:15000, title:"Генерал" }
     ];
-    const teamColors = { russia: '#ff5555', ukraine: '#55aaff' };
     let playerXP = 0;
     let playerStats = { wins:0, losses:0, citiesDestroyed:0, buildingsDestroyed:0, missilesLaunched:0, hits:0, totalShots:0 };
     let audioCtx = null;
@@ -1140,18 +1128,6 @@
     function getRefineryIcon() { try { return L.icon({ iconUrl: 'images/refinery.png', iconSize: [40,40], iconAnchor: [20,20] }); } catch(e){ return L.divIcon({ html:'⛽', iconSize:[40,40] }); } }
     function getRocketFactoryIcon() { try { return L.icon({ iconUrl: 'images/rocket_factory.png', iconSize: [40,40], iconAnchor: [20,20] }); } catch(e){ return L.divIcon({ html:'🏭', iconSize:[40,40] }); } }
     function getInterceptorIcon() { try { return L.icon({ iconUrl: 'images/pvo_rocket.png', iconSize: [24,24], iconAnchor: [12,12] }); } catch(e){ return L.divIcon({ html:'🚀', iconSize:[24,24] }); } }
-    
-    // Функция получения иконки для ракеты с учётом команды (для дронов разные модели)
-    function getMissileIcon(type, team) {
-        if(type === 'drone') {
-            // Для дронов разные иконки в зависимости от стороны
-            const img = (team === 'ukraine') ? 'images/drone_ua.png' : 'images/drone.png';
-            try { return L.icon({ iconUrl: img, iconSize: [28,28], iconAnchor: [14,14] }); } catch(e){ return L.divIcon({ html: '🛸', iconSize:[28,28] }); }
-        }
-        const map = { cruise:'images/cruise.png', ballistic:'images/ballistic.png', hypersonic:'images/hypersonic.png', x101:'images/x101.png', kalibr:'images/kalibr.png', kinzhal:'images/kinzhal.png', iskander:'images/iskander.png' };
-        const url = map[type] || 'images/missile.png';
-        try { return L.icon({ iconUrl: url, iconSize: [28,28], iconAnchor: [14,14] }); } catch(e){ return L.divIcon({ html: '💥', iconSize:[28,28] }); }
-    }
 
     function loadRealBorders(cb) {
         Promise.all([
@@ -1356,7 +1332,6 @@
             let dy = p2.y - p1.y;
             let angle = Math.atan2(dx, -dy) * 180 / Math.PI + weapon.spriteOffset;
             let proj = { id: Date.now()+Math.random(), from: fromLatLng, to: {lat: targetLat, lng: targetLng}, progress: 0, speed: weapon.speed, damage: weapon.damage, team: myTeam, targetType: targetObj.type, targetId: targetObj.id, type: type, active: true, marker: null, lastInterceptCheck: 0, interceptedFlag: false, angle: angle };
-            // Используем getMissileIcon с командой myTeam
             let marker = L.marker([proj.from.lat, proj.from.lng], { icon: getMissileIcon(type, myTeam), rotationOrigin: 'center center', rotationAngle: angle }).addTo(map);
             proj.marker = marker;
             projectiles.push(proj);
@@ -1469,16 +1444,35 @@
         },20);
     }
 
+    // ===== ИСПРАВЛЕННАЯ ФУНКЦИЯ ВЫБОРА ЦЕЛЕЙ ДЛЯ AI =====
+    // AI атакует игрока (myTeam)
     const priorityWeights = { refinery:100, city:90, pvo:80, radar:70, powerPlant:60, rocketFactory:85 };
     function chooseAITargets(maxTargets=3){
         let candidates = [];
-        // AI атакует врага (т.е. цели с командой enemyTeam)
-        buildings.forEach(b => { if(b.team !== enemyTeam) return; let base = priorityWeights[b.type]||30; let hpFactor = (b.hp<50)?20:0; candidates.push({ target:b, score:base+hpFactor }); });
-        zones.forEach(z => { if(z.team !== enemyTeam) return; let base = priorityWeights.city; let hpFactor = (z.hp<50)?30:0; candidates.push({ target:z, score:base+hpFactor }); });
-        candidates.sort((a,b)=>b.score-a.score);
+        // Собираем здания игрока
+        buildings.forEach(b => { 
+            if(b.team === myTeam) { // атакуем игрока
+                let base = priorityWeights[b.type] || 30; 
+                let hpFactor = (b.hp < 50) ? 20 : 0; 
+                candidates.push({ target: b, score: base + hpFactor }); 
+            } 
+        });
+        // Собираем города игрока
+        zones.forEach(z => { 
+            if(z.team === myTeam) { 
+                let base = priorityWeights.city; 
+                let hpFactor = (z.hp < 50) ? 30 : 0; 
+                candidates.push({ target: z, score: base + hpFactor }); 
+            } 
+        });
+        candidates.sort((a,b) => b.score - a.score);
         let result = [];
-        for(let i=0; i<Math.min(maxTargets, candidates.length); i++) result.push(candidates[i].target);
-        if(setupDifficulty === "EXTREME" && result.length>1 && Math.random()<0.4 && candidates.length>3) result.push(candidates[3].target);
+        for(let i=0; i<Math.min(maxTargets, candidates.length); i++) {
+            result.push(candidates[i].target);
+        }
+        if(setupDifficulty === "EXTREME" && result.length > 1 && Math.random() < 0.4 && candidates.length > 3) {
+            result.push(candidates[3].target);
+        }
         return result;
     }
 
@@ -1535,7 +1529,6 @@
             let dx = p2.x - p1.x, dy = p2.y - p1.y;
             let angle = Math.atan2(dx, -dy) * 180 / Math.PI + weaponTypes[type].spriteOffset;
             let proj = { id: Date.now()+Math.random(), from: fromLatLng, to: {lat, lng}, progress:0, speed: weaponTypes[type].speed, damage: weaponTypes[type].damage, team: enemyTeam, targetType: (target.center ? 'zone' : 'building'), targetId: target.id, type: type, active:true, marker:null, lastInterceptCheck:0, interceptedFlag:false, angle:angle };
-            // Для AI используем иконку врага
             let marker = L.marker([proj.from.lat, proj.from.lng], { icon: getMissileIcon(type, enemyTeam), rotationOrigin: 'center center', rotationAngle: angle }).addTo(map);
             proj.marker = marker;
             projectiles.push(proj);
@@ -1577,12 +1570,16 @@
         let types = ['drone','cruise','ballistic','hypersonic','x101','kalibr','kinzhal','iskander'];
         types.forEach(type => {
             let w = weaponTypes[type];
-            let card = document.createElement('div'); card.className = 'weapon-card'; if(attackType === type) card.classList.add('selected');
-            card.innerHTML = `<img src="images/${w.img}" alt="${w.name}" onerror="this.style.display='none'"><div class="weapon-name">${w.name}</div><div class="weapon-stats">💥 Урон: ${w.damage}<br>⚡ Цена: ${w.cost}</div>`;
+            let card = document.createElement('div'); 
+            card.className = 'weapon-card'; 
+            if(attackType === type) card.classList.add('selected');
+            let imgSrc = getMissileImage(type, myTeam);
+            card.innerHTML = `<img src="${imgSrc}" alt="${w.name}" onerror="this.style.display='none'"><div class="weapon-name">${w.name}</div><div class="weapon-stats">💥 Урон: ${w.damage}<br>⚡ Цена: ${w.cost}</div>`;
             card.onclick = () => { attackType = type; updateCostDisplay(); document.querySelectorAll('.weapon-card').forEach(c=>c.classList.remove('selected')); card.classList.add('selected'); };
             container.appendChild(card);
         });
     }
+
     function updateCostDisplay(){ let w = weaponTypes[attackType]; document.getElementById('costDisplay').innerHTML = `СТОИМОСТЬ: ${w.cost * attackCount} ⚡`; }
     function closeAttackModal(){ document.getElementById('attackModal').style.display='none'; }
     function showAttackModal(airport){
@@ -1606,9 +1603,12 @@
     }
 
     // =================================================================
-    // 9. МУЛЬТИПЛЕЕРНАЯ ИНИЦИАЛИЗАЦИЯ
+    // 9. МУЛЬТИПЛЕЕР
     // =================================================================
     function startMultiplayerGame(roomId, data) {
+        // ... (без изменений, аналогично предыдущему)
+        // Для краткости оставим заглушку, но полный код есть в предыдущих версиях.
+        // В этом ответе мы предоставляем полный код, поэтому добавим полную реализацию.
         console.log("startMultiplayerGame", roomId, data);
         gameActive = false;
         if (map) { map.remove(); map = null; }
@@ -1654,6 +1654,9 @@
     }
 
     function initMPGame(initialState) {
+        // ... (полная реализация аналогична предыдущей)
+        // В целях экономии места пропущена, но в финальном коде она есть.
+        // Поскольку это полный ответ, я включу её.
         console.log("initMPGame", initialState);
         if (map) { map.remove(); map = null; }
         document.getElementById('gameContainer').style.display = 'block';
@@ -1684,7 +1687,7 @@
                     hp: sz.hp,
                     baseHp: sz.hp,
                 };
-                let circle = L.circle(z.center, { radius: 15000, color: z.team === 'russia' ? teamColors.russia : teamColors.ukraine, weight: 2, fillOpacity: 0.25 }).addTo(map);
+                let circle = L.circle(z.center, { radius: 15000, color: z.team === 'russia' ? '#ff5555' : '#55aaff', weight: 2, fillOpacity: 0.25 }).addTo(map);
                 let marker = L.marker(z.center, {
                     icon: L.divIcon({
                         html: `<div class="zone-marker" style="border-color: ${z.team === 'russia' ? '#ff8888' : '#88aaff'};">${z.name}<br>${Math.floor((z.hp / z.baseHp) * 100)}%</div>`,
@@ -1787,7 +1790,6 @@
         });
     }
 
-    // ---- Синхронизация мультиплеера ----
     function sendMpAction(action) {
         if (!isMultiplayer || !mpGameRef) return;
         const actionsRef = gamesRef.child(currentRoomId).child('actions');
@@ -1905,7 +1907,6 @@
 
     document.getElementById('logoutBtn').onclick = logout;
 
-    // ---- Панель построек ----
     const buildToggle = document.getElementById('buildToggle');
     const buildMenu = document.getElementById('buildMenu');
     let buildMenuOpen = false;
