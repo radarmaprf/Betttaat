@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Sky in Fire —лицензионная версия </title>
+    <title>Sky in Fire — лицензионная версия</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-rotatedmarker/leaflet.rotatedMarker.js"></script>
@@ -11,7 +11,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-    <!-- SHA-256 для хеширования паролей и ключей -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         /* ====== БАЗОВЫЕ СТИЛИ ====== */
@@ -96,13 +95,103 @@
         .loading-indicator{background:rgba(0,0,0,.7);color:#fff;padding:8px 16px;border-radius:30px;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3000;font-size:clamp(.9rem,2vw,1.2rem)}
         .explosion{width:30px;height:30px;border-radius:50%;background:#ffcc00;box-shadow:0 0 20px #ffcc00,0 0 40px orange,0 0 80px red;animation:explode .5s forwards}
         @keyframes explode{0%{transform:scale(.2);opacity:1}100%{transform:scale(3);opacity:0}}
-        @keyframes radarSpin{0%{transform:translateX(-50%) rotate(0)}100%{transform:translateX(-50%) rotate(360deg)}}
+        @keyframes radarSpin{0%{transform:translateX(-50%) rotate(0)}100%{transform:translateX(-50%) rotate(360)}}
         .leaflet-marker-icon{transform-origin:center center}
         .leaflet-control-zoom{display:none!important}
         @media (max-width:600px){#gameHUD{padding:4px 8px;font-size:.7rem;min-height:auto}.hud-top,.hud-bottom{flex-wrap:wrap;justify-content:center;gap:2px}.hud-resource,.hud-rank{font-size:.8rem;padding:2px 6px}.health-bars{justify-content:space-around;padding:2px 4px}.health-bar{font-size:.6rem;gap:2px}.bar-bg{width:50px;height:5px}#buildToggle{font-size:.9rem;padding:6px 12px;min-height:40px;min-width:44px}#buildMenu .build-btn{font-size:.8rem;padding:4px 10px;white-space:normal}.modal{width:95vw;padding:12px}.modal .weapon-grid{grid-template-columns:1fr 1fr;gap:6px;max-height:200px}.modal .weapon-card{padding:4px}.modal .weapon-card img{height:40px}.card,.auth-card{padding:16px;border-radius:32px;width:100%;max-width:95%}.logo{font-size:2rem}.difficulty-btn{font-size:.6rem;padding:4px 8px}.card button,.auth-card button{font-size:.9rem;padding:10px;margin:6px 0}.card input,.auth-card input{font-size:.9rem;padding:10px}}
         @media (min-width:601px) and (max-width:900px){#gameHUD{padding:4px 12px;font-size:.8rem}.bar-bg{width:80px;height:7px}.modal{width:80vw;padding:20px}.card,.auth-card{padding:30px 24px}.logo{font-size:2.5rem}}
         @media (max-width:800px) and (orientation:landscape){#gameHUD{flex-direction:row;flex-wrap:wrap;font-size:.6rem;padding:2px 8px;min-height:30px}.hud-resource,.hud-rank{font-size:.7rem;padding:2px 6px}.bar-bg{width:40px;height:4px}#buildToggle{padding:6px 12px;font-size:.8rem;min-height:30px}#buildMenu .build-btn{font-size:.7rem;padding:4px 10px}.modal{width:70vw;max-height:80vh;padding:12px}.modal .weapon-grid{max-height:150px}.modal .weapon-card img{height:30px}}
         @media (max-width:400px){.card,.auth-card{padding:12px 10px;border-radius:24px}.logo{font-size:1.6rem}.difficulty-btn{font-size:.5rem;padding:3px 6px}.card button,.auth-card button{font-size:.8rem;padding:8px;margin:4px 0}.card input,.auth-card input{font-size:.8rem;padding:8px}.bar-bg{width:35px;height:4px}.modal{padding:10px;width:98vw}.modal h3{font-size:1rem}.modal .weapon-card{padding:4px}.modal .weapon-card img{height:30px}}
+
+        /* ===== НОВЫЙ СТИЛЬ ДЛЯ МЕНЮ НАСТРОЙКИ ===== */
+        #setupModal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(180deg, #0d1a1a, #020808);
+            border-radius: 40px;
+            padding: clamp(20px, 4vw, 35px);
+            z-index: 6000;
+            color: #fff;
+            width: clamp(320px, 90vw, 700px);
+            max-height: 85vh;
+            overflow-y: auto;
+            border: 2px solid #ffaa33;
+            box-shadow: 0 0 50px rgba(255,170,51,0.3);
+            display: none;
+        }
+        #setupModal h2 {
+            text-align: center;
+            color: #ffaa33;
+            font-size: clamp(1.6rem, 4vw, 2.2rem);
+            margin-bottom: 15px;
+        }
+        .setup-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 15px 0;
+        }
+        .setup-col {
+            background: rgba(0,0,0,0.4);
+            border-radius: 20px;
+            padding: 12px;
+        }
+        .setup-col h3 {
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+            font-size: clamp(1rem, 2vw, 1.3rem);
+        }
+        .setup-col .city-list {
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: clamp(.8rem, 1.5vw, 1rem);
+            line-height: 1.8;
+            padding-left: 10px;
+        }
+        .setup-col .city-list span {
+            display: block;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .setup-col .city-list .city-name {
+            font-weight: 500;
+        }
+        .setup-col .city-list .city-hp {
+            float: right;
+            color: #88aaff;
+            font-size: .8em;
+        }
+        #setupModal .close-setup {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #aaa;
+            transition: .2s;
+        }
+        #setupModal .close-setup:hover { color: #fff; }
+        #setupModal .start-btn {
+            display: block;
+            width: 100%;
+            background: #ffaa33;
+            border: none;
+            padding: clamp(12px, 2.5vh, 16px);
+            border-radius: 60px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 15px;
+            color: #1a2a2a;
+            font-size: clamp(1rem, 2vw, 1.2rem);
+            touch-action: manipulation;
+        }
+        #setupModal .start-btn:active { transform: scale(.96); }
+        @media (max-width: 600px) {
+            .setup-grid { grid-template-columns: 1fr; gap: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -171,6 +260,26 @@
     <ul id="rankList" class="ranking-list">
         <li style="text-align:center; color:#888; padding:20px;">Загрузка...</li>
     </ul>
+</div>
+
+<!-- НОВОЕ МЕНЮ НАСТРОЙКИ ПЕРЕД СТАРТОМ -->
+<div id="setupModal">
+    <span class="close-setup" id="closeSetupModal">&times;</span>
+    <h2>⚙️ НАСТРОЙКА ИГРЫ</h2>
+    <div style="text-align:center; margin-bottom:10px;">
+        <span style="background:#1e2e2e; padding:4px 16px; border-radius:40px; font-weight:bold;">Сложность: <span id="setupDifficultyDisplay">NORMAL</span></span>
+    </div>
+    <div class="setup-grid">
+        <div class="setup-col">
+            <h3>🇷🇺 РОССИЯ</h3>
+            <div id="russiaCityList" class="city-list"></div>
+        </div>
+        <div class="setup-col">
+            <h3>🇺🇦 УКРАИНА</h3>
+            <div id="ukraineCityList" class="city-list"></div>
+        </div>
+    </div>
+    <button class="start-btn" id="startGameBtn">🚀 НАЧАТЬ ИГРУ</button>
 </div>
 
 <!-- Модалка атаки -->
@@ -242,7 +351,6 @@
     // =================================================================
     // 3. ЛИЦЕНЗИОННЫЕ КЛЮЧИ (ХЕШИРОВАННЫЕ)
     // =================================================================
-    // Оригинальные ключи (для проверки хранятся только хеши)
     const VALID_KEYS_ORIGINAL = [
         "theoqjzn6heuwn478-yeneis528y","kf92jdn30qpeor83-xmz73kdl","h8d73jf92kdn392u-jd83mz",
         "vgs392kf92jdn30qpe-xy81m4n","pq83jf92jdn30qpeor-74hs8w2","mz73kdl92jdn30qpe-93jsk2l",
@@ -262,11 +370,10 @@
         "5j2hs9f92jdn30qpeor-6n7ks5","8n5ks3jf92jdn30qpeor-9k1slb","1k6slakf92jdn30qpe-2j3hs4",
         "3j0hs2f92jdn30qpeor-4n9ks7","6n7ks5jf92jdn30qpeor-7k2slc"
     ];
-    // Хеши ключей
     const VALID_KEYS_HASHES = VALID_KEYS_ORIGINAL.map(k => hashSHA256(k));
 
     // =================================================================
-    // 4. УПРАВЛЕНИЕ АККАУНТАМИ И СЕССИЯМИ (БЕЗОПАСНО)
+    // 4. УПРАВЛЕНИЕ АККАУНТАМИ И СЕССИЯМИ
     // =================================================================
     let currentUser = null;
     let currentSessionToken = null;
@@ -349,18 +456,15 @@
     async function activateKey(key) {
         if(!key) { authMessage.innerText = "Введите ключ"; return false; }
         const keyHash = hashSHA256(key);
-        // Проверяем, есть ли ключ в списке допустимых (по хешу)
         if(!VALID_KEYS_HASHES.includes(keyHash)) {
             authMessage.innerText = "Неверный ключ (не соответствует формату)";
             return false;
         }
-        // Проверяем, не использован ли ключ глобально
         const usedSnap = await db.ref('usedKeys/' + keyHash).get();
         if(usedSnap.exists()) {
             authMessage.innerText = "Этот ключ уже был использован другим игроком!";
             return false;
         }
-        // Помечаем ключ как использованный (храним хеш)
         await db.ref('usedKeys/' + keyHash).set(true);
         const userRef = usersRef.child(currentUser);
         const userSnap = await userRef.get();
@@ -718,6 +822,112 @@
     let currentAirport = null;
     let attackType = 'drone', attackCount = 1;
 
+    // ---- НОВЫЙ СПИСОК ГОРОДОВ (15 для каждой страны) ----
+    const zoneData = [
+        // Россия (сортировка по долготе от западной к восточной)
+        { name: 'БРЯНСК', center: [53.2433, 34.3637], team: 'russia', hp: 280, baseHp: 280 },
+        { name: 'СМОЛЕНСК', center: [54.7826, 32.0453], team: 'russia', hp: 290, baseHp: 290 },
+        { name: 'БЕЛГОРОД', center: [50.5975, 36.5858], team: 'russia', hp: 240, baseHp: 240 },
+        { name: 'КУРСК', center: [51.7304, 36.1927], team: 'russia', hp: 260, baseHp: 260 },
+        { name: 'КАЛУГА', center: [54.5138, 36.2612], team: 'russia', hp: 270, baseHp: 270 },
+        { name: 'ВЕЛИКИЙ НОВГОРОД', center: [58.5213, 31.2755], team: 'russia', hp: 250, baseHp: 250 },
+        { name: 'МОСКВА', center: [55.7558, 37.6173], team: 'russia', hp: 480, baseHp: 480 },
+        { name: 'РОСТОВ-НА-ДОНУ', center: [47.2357, 39.7015], team: 'russia', hp: 300, baseHp: 300 },
+        { name: 'КРАСНОДАР', center: [45.0355, 38.9753], team: 'russia', hp: 280, baseHp: 280 },
+        { name: 'СТАВРОПОЛЬ', center: [45.0448, 41.9691], team: 'russia', hp: 260, baseHp: 260 },
+        { name: 'ИЖЕВСК', center: [56.8528, 53.2119], team: 'russia', hp: 240, baseHp: 240 },
+        { name: 'ЕКАТЕРИНБУРГ', center: [56.8389, 60.6057], team: 'russia', hp: 320, baseHp: 320 },
+        { name: 'ПЕРМЬ', center: [58.0104, 56.2294], team: 'russia', hp: 260, baseHp: 260 },
+        { name: 'ЧЕЛЯБИНСК', center: [55.1644, 61.4368], team: 'russia', hp: 280, baseHp: 280 },
+        { name: 'ЧЕБОКСАРЫ (ЧУВАШИЯ)', center: [56.1432, 47.2489], team: 'russia', hp: 230, baseHp: 230 },
+
+        // Украина (сортировка по долготе от восточной к западной)
+        { name: 'ХАРЬКОВ', center: [49.9935, 36.2304], team: 'ukraine', hp: 360, baseHp: 360 },
+        { name: 'ДНЕПР', center: [48.4647, 35.0467], team: 'ukraine', hp: 340, baseHp: 340 },
+        { name: 'ЗАПОРОЖЬЕ', center: [47.8388, 35.1396], team: 'ukraine', hp: 300, baseHp: 300 },
+        { name: 'СУМЫ', center: [50.9077, 34.7981], team: 'ukraine', hp: 240, baseHp: 240 },
+        { name: 'ПОЛТАВА', center: [49.5891, 34.5514], team: 'ukraine', hp: 250, baseHp: 250 },
+        { name: 'ЧЕРНИГОВ', center: [51.4982, 31.2893], team: 'ukraine', hp: 220, baseHp: 220 },
+        { name: 'КИЕВ', center: [50.4501, 30.5234], team: 'ukraine', hp: 400, baseHp: 400 },
+        { name: 'ЧЕРКАССЫ', center: [49.4264, 32.0591], team: 'ukraine', hp: 230, baseHp: 230 },
+        { name: 'ВИННИЦА', center: [49.2328, 28.4810], team: 'ukraine', hp: 240, baseHp: 240 },
+        { name: 'ХМЕЛЬНИЦКИЙ', center: [49.4223, 26.9872], team: 'ukraine', hp: 220, baseHp: 220 },
+        { name: 'НИКОЛАЕВ', center: [46.9750, 31.9946], team: 'ukraine', hp: 260, baseHp: 260 },
+        { name: 'КРИВОЙ РОГ', center: [47.9087, 33.3947], team: 'ukraine', hp: 280, baseHp: 280 },
+        { name: 'МАРИУПОЛЬ', center: [47.0971, 37.5433], team: 'ukraine', hp: 270, baseHp: 270 },
+        { name: 'ОДЕССА', center: [46.4825, 30.7233], team: 'ukraine', hp: 320, baseHp: 320 },
+        { name: 'ЛЬВОВ', center: [49.8397, 24.0297], team: 'ukraine', hp: 280, baseHp: 280 }
+    ];
+
+    // ---- СОРТИРОВКА ГОРОДОВ ПО БЛИЗОСТИ К ГРАНИЦЕ ----
+    // Для России: чем западнее (меньше долгота), тем ближе к Украине
+    // Для Украины: чем восточнее (больше долгота), тем ближе к России
+    function sortCities() {
+        const russiaCities = zoneData.filter(z => z.team === 'russia').sort((a,b) => a.center[1] - b.center[1]);
+        const ukraineCities = zoneData.filter(z => z.team === 'ukraine').sort((a,b) => b.center[1] - a.center[1]);
+        return { russia: russiaCities, ukraine: ukraineCities };
+    }
+
+    // ---- ЗАПОЛНЕНИЕ СПИСКОВ В МЕНЮ НАСТРОЙКИ ----
+    function populateCityLists() {
+        const sorted = sortCities();
+        const russiaList = document.getElementById('russiaCityList');
+        const ukraineList = document.getElementById('ukraineCityList');
+        russiaList.innerHTML = '';
+        ukraineList.innerHTML = '';
+        sorted.russia.forEach(city => {
+            const span = document.createElement('span');
+            span.innerHTML = `<span class="city-name">${city.name}</span> <span class="city-hp">❤️ ${city.baseHp}</span>`;
+            russiaList.appendChild(span);
+        });
+        sorted.ukraine.forEach(city => {
+            const span = document.createElement('span');
+            span.innerHTML = `<span class="city-name">${city.name}</span> <span class="city-hp">❤️ ${city.baseHp}</span>`;
+            ukraineList.appendChild(span);
+        });
+    }
+
+    // ---- ОТОБРАЖЕНИЕ МЕНЮ НАСТРОЙКИ ----
+    function showSetupModal(isSandboxMode) {
+        const modal = document.getElementById('setupModal');
+        document.getElementById('setupDifficultyDisplay').innerText = difficulty;
+        populateCityLists();
+        modal.style.display = 'block';
+        // Сохраняем режим для старта
+        modal.dataset.mode = isSandboxMode ? 'sandbox' : 'single';
+    }
+
+    document.getElementById('closeSetupModal').onclick = function() {
+        document.getElementById('setupModal').style.display = 'none';
+    };
+    window.addEventListener('click', function(e) {
+        if (e.target === document.getElementById('setupModal')) {
+            document.getElementById('setupModal').style.display = 'none';
+        }
+    });
+
+    document.getElementById('startGameBtn').onclick = function() {
+        const modal = document.getElementById('setupModal');
+        const mode = modal.dataset.mode;
+        modal.style.display = 'none';
+        // Запускаем игру
+        if (mode === 'sandbox') {
+            isSandbox = true;
+            isAI = true;
+            isMultiplayer = false;
+            myTeam = 'russia';
+            enemyTeam = 'ukraine';
+            initGameMapAndLogic();
+        } else {
+            isSandbox = false;
+            isAI = true;
+            isMultiplayer = false;
+            myTeam = 'russia';
+            enemyTeam = 'ukraine';
+            initGameMapAndLogic();
+        }
+    };
+
     // ---- Fallback границы ----
     const fallbackRussia = {
         "type":"FeatureCollection",
@@ -775,19 +985,6 @@
         osc.start(); osc.stop(now + duration);
     }
 
-    const zoneData = [
-        { name: 'КИЕВ', center: [50.4501,30.5234], team: 'ukraine', hp: 400, baseHp: 400 },
-        { name: 'ОДЕССА', center: [46.4825,30.7233], team: 'ukraine', hp: 320, baseHp: 320 },
-        { name: 'ХАРЬКОВ', center: [49.9935,36.2304], team: 'ukraine', hp: 360, baseHp: 360 },
-        { name: 'ДНЕПР', center: [48.4647,35.0467], team: 'ukraine', hp: 340, baseHp: 340 },
-        { name: 'ЛЬВОВ', center: [49.8397,24.0297], team: 'ukraine', hp: 280, baseHp: 280 },
-        { name: 'МОСКВА', center: [55.7558,37.6173], team: 'russia', hp: 480, baseHp: 480 },
-        { name: 'БЕЛГОРОД', center: [50.5975,36.5858], team: 'russia', hp: 240, baseHp: 240 },
-        { name: 'РОСТОВ', center: [47.2357,39.7015], team: 'russia', hp: 300, baseHp: 300 },
-        { name: 'ВОРОНЕЖ', center: [51.6605,39.2003], team: 'russia', hp: 320, baseHp: 320 },
-        { name: 'ВОЛГОГРАД', center: [48.7047,44.5133], team: 'russia', hp: 340, baseHp: 340 },
-        { name: 'КРАСНОДАР', center: [45.0355,38.9753], team: 'russia', hp: 280, baseHp: 280 }
-    ];
     const teamColors = { russia: '#ff5555', ukraine: '#55aaff' };
 
     function getAirportIcon() { try { return L.icon({ iconUrl: 'images/airport.png', iconSize: [48,48], iconAnchor: [24,24] }); } catch(e){ return L.divIcon({ html:'🏠', iconSize:[48,48] }); } }
@@ -1557,12 +1754,7 @@
             playBeep(600, 0.1);
             setTimeout(() => {
                 playBeep(800, 0.1);
-                isAI = true;
-                isSandbox = false;
-                isMultiplayer = false;
-                myTeam = 'russia';
-                enemyTeam = 'ukraine';
-                initGameMapAndLogic();
+                showSetupModal(false); // одиночная
             }, 100);
         }, 100);
     };
@@ -1574,12 +1766,7 @@
             playBeep(600, 0.1);
             setTimeout(() => {
                 playBeep(800, 0.1);
-                isAI = true;
-                isSandbox = true;
-                isMultiplayer = false;
-                myTeam = 'russia';
-                enemyTeam = 'ukraine';
-                initGameMapAndLogic();
+                showSetupModal(true); // песочница
             }, 100);
         }, 100);
     };
