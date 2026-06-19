@@ -13,7 +13,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
-        /* ====== БАЗОВЫЕ СТИЛИ ====== */
         *{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent}
         body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0f12;overflow:hidden;height:100vh;color:#eef;touch-action:manipulation}
         .screen{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;justify-content:center;align-items:center;z-index:2000;background:radial-gradient(circle at 20% 30%,#0a1f1a,#030a08)}
@@ -681,6 +680,7 @@
     let mpGameRef = null;
     let isMultiplayer = false;
     let mpInitDone = false;
+    let actionsListenerRef = null; // для прослушивания действий
 
     document.getElementById('multiplayerBtn').onclick = function() {
         const controls = document.getElementById('multiplayerControls');
@@ -740,7 +740,6 @@
         return id;
     }
 
-    // --- КНОПКА КОПИРОВАНИЯ КОДА КОМНАТЫ ---
     document.getElementById('copyRoomCodeBtn').onclick = function() {
         const code = document.getElementById('lobbyRoomCode').innerText;
         if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -852,6 +851,7 @@
     function leaveLobby() {
         mpInitDone = false;
         if (gameListenerRef) { gameListenerRef.off(); gameListenerRef = null; }
+        if (actionsListenerRef) { actionsListenerRef.off(); actionsListenerRef = null; }
         if (currentRoomId) {
             if (isHost) {
                 gamesRef.child(currentRoomId).remove().catch(()=>{});
@@ -1645,7 +1645,7 @@
     }
 
     // =================================================================
-    // 9. МУЛЬТИПЛЕЕР (без завершения при отключении)
+    // 9. МУЛЬТИПЛЕЕР (исправленный)
     // =================================================================
     function startMultiplayerGame(roomId, data) {
         console.log("startMultiplayerGame", roomId, data);
@@ -1690,6 +1690,131 @@
                 initMPGame(state);
             }
         }).catch(err => console.error("Ошибка загрузки состояния:", err));
+
+        // ---- Хост слушает действия клиентов и обновляет состояние ----
+        if (isHost) {
+            const actionsRef = gamesRef.child(roomId).child('actions');
+            if (actionsListenerRef) actionsListenerRef.off();
+            actionsListenerRef = actionsRef;
+            actionsRef.on('child_added', (snapshot) => {
+                const action = snapshot.val();
+                if (!action) return;
+                // Игнорируем свои действия, чтобы не дублировать
+                if (action.player === currentUser) return;
+                // Применяем действие к состоянию хоста
+                applyAction(action);
+            });
+        }
+    }
+
+    // ---- Функция применения действия к состоянию хоста ----
+    function applyAction(action) {
+        console.log("Применяем действие:", action);
+        if (action.type === 'build') {
+            const b = action.building;
+            // Добавляем здание в локальный список хоста
+            // Проверяем, нет ли уже такого здания
+            if (!buildings.some(lb => lb.id === b.id)) {
+                let building = { ...b, marker: null, radarCircle: null };
+                // Воссоздаём маркер на карте хоста
+                let icon;
+                if (b.type === 'radar') icon = getRadarIcon();
+                else if (b.type === 'pvo') icon = getPvoIcon();
+                else if (b.type === 'powerPlant') icon = getPowerPlantIcon();
+                else if (b.type === 'refinery') icon = getRefineryIcon();
+                else if (b.type === 'rocketFactory') icon = getRocketFactoryIcon();
+                if (icon) {
+                    let marker = L.marker([b.lat, b.lng], { icon }).addTo(map);
+                    building.marker = marker;
+                    if (b.type === 'radar') {
+                        let circle = L.circle([b.lat, b.lng], { radius: 150000, color: '#00ffff', weight: 1, fillOpacity: 0.05 }).addTo(map);
+                        building.radarCircle = circle;
+                        radars.push(building);
+                    } else if (b.type === 'pvo') {
+                        pvoSystems.push(building);
+                    } else if (b.type === 'powerPlant') {
+                        powerPlants.push(building);
+                    } else if (b.type === 'refinery') {
+                        refineries.push(building);
+                    } else if (b.type === 'rocketFactory') {
+                        rocketFactories.push(building);
+                    }
+                    buildings.push(building);
+                }
+                // Обновляем состояние и отправляем всем
+                sendGameStateUpdate();
+            }
+        } else if (action.type === 'launch') {
+            // Запуск ракеты от клиента
+            // Создаём снаряд на хосте
+            const weapon = weaponTypes[action.weaponType];
+            if (!weapon) return;
+            const fromLatLng = action.from;
+            const targetObj = action.to;
+            const count = action.count || 1;
+            for (let i = 0; i < count; i++) {
+                let offset = (i - (count-1)/2) * 0.03;
+                let targetLat = targetObj.lat + offset;
+                let targetLng = targetObj.lng + offset * 0.5;
+                let p1 = map.latLngToLayerPoint([fromLatLng.lat, fromLatLng.lng]);
+                let p2 = map.latLngToLayerPoint([targetLat, targetLng]);
+                let dx = p2.x - p1.x;
+                let dy = p2.y - p1.y;
+                let angle = Math.atan2(dx, -dy) * 180 / Math.PI + weapon.spriteOffset;
+                let proj = {
+                    id: Date.now()+Math.random(),
+                    from: fromLatLng,
+                    to: {lat: targetLat, lng: targetLng},
+                    progress: 0,
+                    speed: weapon.speed,
+                    damage: weapon.damage,
+                    team: action.team, // команда игрока, который запустил
+                    targetType: action.targetType,
+                    targetId: action.targetId,
+                    type: action.weaponType,
+                    active: true,
+                    marker: null,
+                    lastInterceptCheck: 0,
+                    interceptedFlag: false,
+                    angle: angle
+                };
+                let marker = L.marker([proj.from.lat, proj.from.lng], {
+                    icon: getMissileIcon(action.weaponType, action.team),
+                    rotationOrigin: 'center center',
+                    rotationAngle: angle
+                }).addTo(map);
+                proj.marker = marker;
+                projectiles.push(proj);
+            }
+            sendGameStateUpdate();
+        } else if (action.type === 'intercept') {
+            // Перехват от клиента - хост просто отмечает снаряд как перехваченный
+            const proj = projectiles.find(p => p.id === action.projectileId);
+            if (proj) {
+                proj.active = false;
+                if (proj.marker) map.removeLayer(proj.marker);
+                projectiles = projectiles.filter(p => p.id !== action.projectileId);
+                sendGameStateUpdate();
+            }
+        } else if (action.type === 'damageZone') {
+            const zone = zones.find(z => z.id === action.zoneId);
+            if (zone) {
+                zone.hp = action.newHp;
+                updateZoneMarkers();
+                if (zone.hp <= 0) removeZoneIfDestroyed(zone);
+                sendGameStateUpdate();
+            }
+        } else if (action.type === 'damageBuilding') {
+            const building = buildings.find(b => b.id === action.buildingId);
+            if (building) {
+                building.hp = action.newHp;
+                if (building.hp <= 0) destroyBuilding(building);
+                sendGameStateUpdate();
+            }
+        } else if (action.type === 'airportPlaced') {
+            // Если клиент поставил аэродром, хост может отметить это (но мы не храним аэродром в состоянии)
+            // Просто игнорируем, т.к. аэродром не влияет на геймплей кроме возможности строить
+        }
     }
 
     function initMPGame(initialState) {
