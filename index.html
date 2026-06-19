@@ -188,6 +188,33 @@
             border-color: gold;
             color: #1a2a2a;
         }
+        /* Стили для выбора страны */
+        #setupModal .country-select-modal {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 10px 0 15px;
+        }
+        #setupModal .country-btn-modal {
+            flex: 1;
+            min-width: 100px;
+            background: #3a5e5e;
+            border: 2px solid #fff;
+            border-radius: 40px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: .1s;
+            font-size: clamp(.8rem, 1.5vw, 1.1rem);
+            text-align: center;
+            color: #fff;
+        }
+        #setupModal .country-btn-modal.selected {
+            background: #ffaa33;
+            border-color: gold;
+            color: #1a2a2a;
+        }
         #setupModal .close-setup {
             position: absolute;
             top: 10px;
@@ -241,7 +268,6 @@
     <div class="scan-line"></div>
     <div class="card">
         <div class="logo">☢️ SKY IN FIRE</div>
-        <!-- Блок выбора сложности УДАЛЁН -->
         <button id="singleBtn">⚔️ ОДИНОЧНАЯ ИГРА</button>
         <button id="sandboxBtn">🏖️ ПЕСОЧНИЦА</button>
         <button id="multiplayerBtn">🌐 МУЛЬТИПЛЕЕР 1v1</button>
@@ -281,16 +307,26 @@
     </ul>
 </div>
 
-<!-- НОВОЕ МЕНЮ НАСТРОЙКИ -->
+<!-- НОВОЕ МЕНЮ НАСТРОЙКИ С ВЫБОРОМ СТРАНЫ -->
 <div id="setupModal">
     <span class="close-setup" id="closeSetupModal">&times;</span>
     <h2>⚙️ НАСТРОЙКА ИГРЫ</h2>
+    
+    <!-- ВЫБОР СТРАНЫ -->
+    <div class="country-select-modal">
+        <div class="country-btn-modal selected" data-country="russia">🇷🇺 РОССИЯ</div>
+        <div class="country-btn-modal" data-country="ukraine">🇺🇦 УКРАИНА</div>
+    </div>
+
+    <!-- ВЫБОР СЛОЖНОСТИ -->
     <div class="difficulty-select-modal">
         <div class="difficulty-btn-modal" data-diff="EASY">EASY</div>
         <div class="difficulty-btn-modal selected" data-diff="NORMAL">NORMAL</div>
         <div class="difficulty-btn-modal" data-diff="HARD">HARD</div>
         <div class="difficulty-btn-modal" data-diff="EXTREME">EXTREME</div>
     </div>
+
+    <!-- СПИСКИ ГОРОДОВ -->
     <div class="setup-grid">
         <div class="setup-col">
             <h3>🇷🇺 РОССИЯ</h3>
@@ -878,6 +914,7 @@
     let setupDifficulty = 'NORMAL';
     let setupMode = 'single'; // 'single' или 'sandbox'
     let selectedCityNames = [];
+    let selectedCountry = 'russia'; // 'russia' или 'ukraine'
 
     // ---- ФУНКЦИЯ ПЕРЕСЧЁТА HP И СОРТИРОВКИ ----
     function prepareCities(selectedNames) {
@@ -933,6 +970,11 @@
         setupMode = mode;
         const modal = document.getElementById('setupModal');
         populateCityLists();
+        // Обновить выбор страны
+        document.querySelectorAll('.country-btn-modal').forEach(btn => {
+            btn.classList.toggle('selected', btn.dataset.country === selectedCountry);
+        });
+        // Обновить выбор сложности
         document.querySelectorAll('.difficulty-btn-modal').forEach(btn => {
             btn.classList.toggle('selected', btn.dataset.diff === setupDifficulty);
         });
@@ -940,6 +982,14 @@
     }
 
     // ---- ОБРАБОТЧИКИ В МОДАЛКЕ ----
+    document.querySelectorAll('.country-btn-modal').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.country-btn-modal').forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            selectedCountry = this.dataset.country;
+        });
+    });
+
     document.querySelectorAll('.difficulty-btn-modal').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelectorAll('.difficulty-btn-modal').forEach(b => b.classList.remove('selected'));
@@ -975,8 +1025,9 @@
         }
         isAI = true;
         isMultiplayer = false;
-        myTeam = 'russia';
-        enemyTeam = 'ukraine';
+        // Устанавливаем сторону игрока на основе выбора
+        myTeam = selectedCountry;
+        enemyTeam = (myTeam === 'russia') ? 'ukraine' : 'russia';
         initGameMapAndLogic(preparedCities);
     };
 
@@ -1008,6 +1059,7 @@
             map.on('click', (e) => {
                 if(!airportPlaced){
                     let lat = e.latlng.lat, lng = e.latlng.lng;
+                    // Проверяем, что строим на своей территории
                     if(!isOwnTerritory(lat,lng)){ alert("Аэродром можно поставить только на своей территории!"); return; }
                     let icon = getAirportIcon();
                     airportMarker = L.marker([lat,lng], {icon}).addTo(map);
@@ -1022,7 +1074,15 @@
                     showHint("📡 Теперь постройте Радар");
                     return;
                 }
-                if(buildMode){ tryBuild(e.latlng.lat, e.latlng.lng, buildMode); buildMode = null; }
+                if(buildMode){ 
+                    // Проверка территории при строительстве других зданий
+                    if(!isOwnTerritory(e.latlng.lat, e.latlng.lng)){
+                        alert("Можно строить только на своей территории!");
+                        return;
+                    }
+                    tryBuild(e.latlng.lat, e.latlng.lng, buildMode); 
+                    buildMode = null; 
+                }
             });
         });
     }
@@ -1080,8 +1140,11 @@
     function getRefineryIcon() { try { return L.icon({ iconUrl: 'images/refinery.png', iconSize: [40,40], iconAnchor: [20,20] }); } catch(e){ return L.divIcon({ html:'⛽', iconSize:[40,40] }); } }
     function getRocketFactoryIcon() { try { return L.icon({ iconUrl: 'images/rocket_factory.png', iconSize: [40,40], iconAnchor: [20,20] }); } catch(e){ return L.divIcon({ html:'🏭', iconSize:[40,40] }); } }
     function getInterceptorIcon() { try { return L.icon({ iconUrl: 'images/pvo_rocket.png', iconSize: [24,24], iconAnchor: [12,12] }); } catch(e){ return L.divIcon({ html:'🚀', iconSize:[24,24] }); } }
+    
+    // Функция получения иконки для ракеты с учётом команды (для дронов разные модели)
     function getMissileIcon(type, team) {
         if(type === 'drone') {
+            // Для дронов разные иконки в зависимости от стороны
             const img = (team === 'ukraine') ? 'images/drone_ua.png' : 'images/drone.png';
             try { return L.icon({ iconUrl: img, iconSize: [28,28], iconAnchor: [14,14] }); } catch(e){ return L.divIcon({ html: '🛸', iconSize:[28,28] }); }
         }
@@ -1139,7 +1202,11 @@
         try { return turf.booleanPointInPolygon(point,feat); } catch(e){ return true; }
     }
     function isOwnTerritory(lat,lng){ if(!myTeam) return false; return isInsideCountry(lat,lng,myTeam); }
-    function canBuildHere(lat,lng){ if(!isOwnTerritory(lat,lng)) return false; for(let b of buildings) if(map.distance([lat,lng],[b.lat,b.lng])<4000) return false; return true; }
+    function canBuildHere(lat,lng){ 
+        if(!isOwnTerritory(lat,lng)) return false; 
+        for(let b of buildings) if(map.distance([lat,lng],[b.lat,b.lng])<4000) return false; 
+        return true; 
+    }
     function canBuildForTeam(lat,lng,team){ if(!isInsideCountry(lat,lng,team)) return false; for(let b of buildings) if(map.distance([lat,lng],[b.lat,b.lng])<4000) return false; return true; }
 
     function updateTotalPercent() {
@@ -1289,6 +1356,7 @@
             let dy = p2.y - p1.y;
             let angle = Math.atan2(dx, -dy) * 180 / Math.PI + weapon.spriteOffset;
             let proj = { id: Date.now()+Math.random(), from: fromLatLng, to: {lat: targetLat, lng: targetLng}, progress: 0, speed: weapon.speed, damage: weapon.damage, team: myTeam, targetType: targetObj.type, targetId: targetObj.id, type: type, active: true, marker: null, lastInterceptCheck: 0, interceptedFlag: false, angle: angle };
+            // Используем getMissileIcon с командой myTeam
             let marker = L.marker([proj.from.lat, proj.from.lng], { icon: getMissileIcon(type, myTeam), rotationOrigin: 'center center', rotationAngle: angle }).addTo(map);
             proj.marker = marker;
             projectiles.push(proj);
@@ -1404,8 +1472,9 @@
     const priorityWeights = { refinery:100, city:90, pvo:80, radar:70, powerPlant:60, rocketFactory:85 };
     function chooseAITargets(maxTargets=3){
         let candidates = [];
-        buildings.forEach(b => { if(b.team !== myTeam) return; let base = priorityWeights[b.type]||30; let hpFactor = (b.hp<50)?20:0; candidates.push({ target:b, score:base+hpFactor }); });
-        zones.forEach(z => { if(z.team !== myTeam) return; let base = priorityWeights.city; let hpFactor = (z.hp<50)?30:0; candidates.push({ target:z, score:base+hpFactor }); });
+        // AI атакует врага (т.е. цели с командой enemyTeam)
+        buildings.forEach(b => { if(b.team !== enemyTeam) return; let base = priorityWeights[b.type]||30; let hpFactor = (b.hp<50)?20:0; candidates.push({ target:b, score:base+hpFactor }); });
+        zones.forEach(z => { if(z.team !== enemyTeam) return; let base = priorityWeights.city; let hpFactor = (z.hp<50)?30:0; candidates.push({ target:z, score:base+hpFactor }); });
         candidates.sort((a,b)=>b.score-a.score);
         let result = [];
         for(let i=0; i<Math.min(maxTargets, candidates.length); i++) result.push(candidates[i].target);
@@ -1466,6 +1535,7 @@
             let dx = p2.x - p1.x, dy = p2.y - p1.y;
             let angle = Math.atan2(dx, -dy) * 180 / Math.PI + weaponTypes[type].spriteOffset;
             let proj = { id: Date.now()+Math.random(), from: fromLatLng, to: {lat, lng}, progress:0, speed: weaponTypes[type].speed, damage: weaponTypes[type].damage, team: enemyTeam, targetType: (target.center ? 'zone' : 'building'), targetId: target.id, type: type, active:true, marker:null, lastInterceptCheck:0, interceptedFlag:false, angle:angle };
+            // Для AI используем иконку врага
             let marker = L.marker([proj.from.lat, proj.from.lng], { icon: getMissileIcon(type, enemyTeam), rotationOrigin: 'center center', rotationAngle: angle }).addTo(map);
             proj.marker = marker;
             projectiles.push(proj);
@@ -1564,7 +1634,6 @@
             let state = snapshot.val();
             if (!state) {
                 if (isHost) {
-                    // Для мультиплеера используем все города с пересчитанным HP
                     const allCitiesWithHp = prepareCities(allCities.map(c => c.name));
                     state = {
                         resources: { russia: 300, ukraine: 300 },
@@ -1705,6 +1774,10 @@
                     return;
                 }
                 if (buildMode) {
+                    if (!isOwnTerritory(e.latlng.lat, e.latlng.lng)) {
+                        alert("Можно строить только на своей территории!");
+                        return;
+                    }
                     tryBuild(e.latlng.lat, e.latlng.lng, buildMode);
                     buildMode = null;
                 }
