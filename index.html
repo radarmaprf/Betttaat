@@ -680,7 +680,7 @@
     let mpGameRef = null;
     let isMultiplayer = false;
     let mpInitDone = false;
-    let actionsListenerRef = null; // для прослушивания действий
+    let actionsListenerRef = null;
 
     document.getElementById('multiplayerBtn').onclick = function() {
         const controls = document.getElementById('multiplayerControls');
@@ -1334,7 +1334,8 @@
         if(type==='refinery') refineries.push(building);
         if(type==='rocketFactory') rocketFactories.push(building);
         updateUI();
-        if(isMultiplayer) sendMpAction({ type:'build', building });
+        if(isMultiplayer && isHost) sendMpAction({ type:'build', building });
+        // Для клиента не отправляем, т.к. он не должен создавать локально
         return true;
     }
 
@@ -1645,7 +1646,7 @@
     }
 
     // =================================================================
-    // 9. МУЛЬТИПЛЕЕР (исправленный)
+    // 9. МУЛЬТИПЛЕЕР (исправленный для клиента)
     // =================================================================
     function startMultiplayerGame(roomId, data) {
         console.log("startMultiplayerGame", roomId, data);
@@ -1691,7 +1692,7 @@
             }
         }).catch(err => console.error("Ошибка загрузки состояния:", err));
 
-        // ---- Хост слушает действия клиентов и обновляет состояние ----
+        // ---- Хост слушает действия клиентов ----
         if (isHost) {
             const actionsRef = gamesRef.child(roomId).child('actions');
             if (actionsListenerRef) actionsListenerRef.off();
@@ -1699,9 +1700,8 @@
             actionsRef.on('child_added', (snapshot) => {
                 const action = snapshot.val();
                 if (!action) return;
-                // Игнорируем свои действия, чтобы не дублировать
-                if (action.player === currentUser) return;
-                // Применяем действие к состоянию хоста
+                if (action.player === currentUser) return; // свои игнорируем
+                console.log("Хост получил действие от клиента:", action);
                 applyAction(action);
             });
         }
@@ -1712,11 +1712,8 @@
         console.log("Применяем действие:", action);
         if (action.type === 'build') {
             const b = action.building;
-            // Добавляем здание в локальный список хоста
-            // Проверяем, нет ли уже такого здания
             if (!buildings.some(lb => lb.id === b.id)) {
                 let building = { ...b, marker: null, radarCircle: null };
-                // Воссоздаём маркер на карте хоста
                 let icon;
                 if (b.type === 'radar') icon = getRadarIcon();
                 else if (b.type === 'pvo') icon = getPvoIcon();
@@ -1741,12 +1738,9 @@
                     }
                     buildings.push(building);
                 }
-                // Обновляем состояние и отправляем всем
                 sendGameStateUpdate();
             }
         } else if (action.type === 'launch') {
-            // Запуск ракеты от клиента
-            // Создаём снаряд на хосте
             const weapon = weaponTypes[action.weaponType];
             if (!weapon) return;
             const fromLatLng = action.from;
@@ -1768,7 +1762,7 @@
                     progress: 0,
                     speed: weapon.speed,
                     damage: weapon.damage,
-                    team: action.team, // команда игрока, который запустил
+                    team: action.team,
                     targetType: action.targetType,
                     targetId: action.targetId,
                     type: action.weaponType,
@@ -1788,7 +1782,6 @@
             }
             sendGameStateUpdate();
         } else if (action.type === 'intercept') {
-            // Перехват от клиента - хост просто отмечает снаряд как перехваченный
             const proj = projectiles.find(p => p.id === action.projectileId);
             if (proj) {
                 proj.active = false;
@@ -1811,10 +1804,8 @@
                 if (building.hp <= 0) destroyBuilding(building);
                 sendGameStateUpdate();
             }
-        } else if (action.type === 'airportPlaced') {
-            // Если клиент поставил аэродром, хост может отметить это (но мы не храним аэродром в состоянии)
-            // Просто игнорируем, т.к. аэродром не влияет на геймплей кроме возможности строить
         }
+        // airportPlaced игнорируем
     }
 
     function initMPGame(initialState) {
@@ -1934,7 +1925,9 @@
                     airportMarker.on('click', () => showAttackModal(airportMarker));
                     airportPlaced = true;
                     showHint("📡 Теперь постройте Радар");
-                    sendMpAction({ type: 'airportPlaced', lat, lng });
+                    if (isMultiplayer) {
+                        sendMpAction({ type: 'airportPlaced', lat, lng });
+                    }
                     return;
                 }
                 if (buildMode) {
@@ -1942,8 +1935,37 @@
                         alert("Можно строить только на своей территории!");
                         return;
                     }
-                    tryBuild(e.latlng.lat, e.latlng.lng, buildMode);
-                    buildMode = null;
+                    // В мультиплеере клиент отправляет действие, а не строит локально
+                    if (isMultiplayer && !isHost) {
+                        // Отправляем действие на хост
+                        const buildingData = {
+                            id: Date.now()+Math.random(),
+                            lat: e.latlng.lat,
+                            lng: e.latlng.lng,
+                            type: buildMode,
+                            team: myTeam,
+                            hp: (buildMode==='radar'?120:(buildMode==='pvo'?180:(buildMode==='powerPlant'?100:(buildMode==='refinery'?150:200))))
+                        };
+                        // Проверка ресурсов и лимитов (у клиента)
+                        if (!isSandbox) {
+                            let cost = costs[buildMode];
+                            if (resources < cost) { alert("Не хватает энергии"); return; }
+                            // Проверка лимитов
+                            if (buildMode==='radar' && radars.filter(r=>r.team===myTeam).length >= maxRadars) { alert(`Максимум ${maxRadars} радаров`); return; }
+                            if (buildMode==='pvo' && pvoSystems.filter(p=>p.team===myTeam).length >= maxPvo) { alert(`Максимум ${maxPvo} ПВО`); return; }
+                            if (buildMode==='powerPlant' && powerPlants.filter(p=>p.team===myTeam).length >= maxPowerPlants) { alert(`Максимум ${maxPowerPlants} электростанций`); return; }
+                            if (buildMode==='refinery' && refineries.filter(r=>r.team===myTeam).length >= maxRefineries) { alert(`Максимум ${maxRefineries} НПЗ`); return; }
+                            resources -= cost;
+                            updateUI();
+                        }
+                        sendMpAction({ type: 'build', building: buildingData });
+                        buildMode = null;
+                        return;
+                    } else {
+                        // Хост или одиночная игра — строим локально
+                        tryBuild(e.latlng.lat, e.latlng.lng, buildMode);
+                        buildMode = null;
+                    }
                 }
             });
 
@@ -2000,11 +2022,19 @@
                 let marker = L.marker([b.lat, b.lng], { icon }).addTo(map);
                 b.marker = marker;
                 buildings.push(b);
-                if (b.type === 'radar') radars.push(b);
-                else if (b.type === 'pvo') pvoSystems.push(b);
-                else if (b.type === 'powerPlant') powerPlants.push(b);
-                else if (b.type === 'refinery') refineries.push(b);
-                else if (b.type === 'rocketFactory') rocketFactories.push(b);
+                if (b.type === 'radar') {
+                    let circle = L.circle([b.lat, b.lng], { radius: 150000, color: '#00ffff', weight: 1, fillOpacity: 0.05 }).addTo(map);
+                    b.radarCircle = circle;
+                    radars.push(b);
+                } else if (b.type === 'pvo') {
+                    pvoSystems.push(b);
+                } else if (b.type === 'powerPlant') {
+                    powerPlants.push(b);
+                } else if (b.type === 'refinery') {
+                    refineries.push(b);
+                } else if (b.type === 'rocketFactory') {
+                    rocketFactories.push(b);
+                }
             });
             const remoteIds = state.buildings.map(b => b.id);
             const toRemove = buildings.filter(b => !remoteIds.includes(b.id));
